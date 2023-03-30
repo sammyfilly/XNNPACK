@@ -5222,7 +5222,7 @@ cc_library(
     defines = select({
         ":xnn_enable_dwconv_multipass_explicit_true": ["XNN_ENABLE_DWCONV_MULTIPASS=1"],
         ":xnn_enable_dwconv_multipass_explicit_false": ["XNN_ENABLE_DWCONV_MULTIPASS=0"],
-        "//conditions:default": ["XNN_ENABLE_DWCONV_MULTIPASS=0"],
+        "//conditions:default": ["XNN_ENABLE_DWCONV_MULTIPASS=1"],
     }),
 )
 
