@@ -134,20 +134,22 @@ enum xnn_status xnn_create_mean_nd_f32(
 }
 
 static enum xnn_status reshape_mean_nd(
-    xnn_operator_t mean_op,
-    size_t num_reduction_axes,
-    const size_t* reduction_axes,
-    size_t num_input_dims,
-    const size_t* input_shape,
-    size_t log2_data_element_size,
-    size_t log2_accumulator_element_size,
-    enum xnn_operator_type expected_operator_type,
-    const void* scaleminmax_params,
-    size_t scaleminmax_params_size,
-    const void* scale_params,
-    size_t scale_params_size,
-    void (*update_params)(xnn_operator_t, size_t),
-    pthreadpool_t threadpool)
+  xnn_operator_t mean_op,
+  size_t num_reduction_axes,
+  const size_t* reduction_axes,
+  size_t num_input_dims,
+  const size_t* input_shape,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
+  size_t log2_data_element_size,
+  size_t log2_accumulator_element_size,
+  enum xnn_operator_type expected_operator_type,
+  const void* scaleminmax_params,
+  size_t scaleminmax_params_size,
+  const void* scale_params,
+  size_t scale_params_size,
+  void (*update_params)(xnn_operator_t, size_t),
+  pthreadpool_t threadpool)
 {
   if (mean_op->type != expected_operator_type) {
     xnn_log_error("failed to reshape operator: operator type mismatch (expected %s, got %s)",
@@ -282,8 +284,10 @@ static enum xnn_status reshape_mean_nd(
       mean_op->compute[0].task_1d = (pthreadpool_task_1d_t) xnn_compute_global_average_pooling_nwc_unipass;
       mean_op->context.global_average_pooling_nwc.unipass_ukernel = mean_op->gavgpool_config->unipass;
     } else {
-      mean_op->context.global_average_pooling_nwc.buffer_size =
-        (channel_like_dim + (XNN_MAX_SIMD_SIZE >> log2_data_element_size)) << log2_accumulator_element_size;
+      *workspace_alignment = XNN_ALLOCATION_ALIGNMENT;
+      *workspace_size = (channel_like_dim + (XNN_MAX_SIMD_SIZE >> log2_data_element_size))
+                        << log2_accumulator_element_size;
+      mean_op->context.global_average_pooling_nwc.buffer_size = *workspace_size;
       mean_op->compute[0].task_1d = (pthreadpool_task_1d_t) xnn_compute_global_average_pooling_nwc_multipass;
       mean_op->context.global_average_pooling_nwc.multipass_ukernel = mean_op->gavgpool_config->multipass;
     }
@@ -304,17 +308,20 @@ static void update_params_mean_f16(
 }
 
 enum xnn_status xnn_reshape_mean_nd_f16(
-    xnn_operator_t mean_op,
-    size_t num_reduction_axes,
-    const size_t* reduction_axes,
-    size_t num_input_dims,
-    const size_t* input_shape,
-    pthreadpool_t threadpool)
+  xnn_operator_t mean_op,
+  size_t num_reduction_axes,
+  const size_t* reduction_axes,
+  size_t num_input_dims,
+  const size_t* input_shape,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
+  pthreadpool_t threadpool)
 {
   return reshape_mean_nd(
     mean_op,
     num_reduction_axes, reduction_axes,
     num_input_dims, input_shape,
+    workspace_size, workspace_alignment,
     /*log2_data_element_size=*/XNN_LOG2_SIZEOF_HALF,
     /*log2_accumulator_element_size=*/XNN_LOG2_SIZEOF_HALF,
     xnn_operator_type_mean_nd_f16,
@@ -336,17 +343,20 @@ static void update_params_mean_f32(
 }
 
 enum xnn_status xnn_reshape_mean_nd_f32(
-    xnn_operator_t mean_op,
-    size_t num_reduction_axes,
-    const size_t* reduction_axes,
-    size_t num_input_dims,
-    const size_t* input_shape,
-    pthreadpool_t threadpool)
+  xnn_operator_t mean_op,
+  size_t num_reduction_axes,
+  const size_t* reduction_axes,
+  size_t num_input_dims,
+  const size_t* input_shape,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
+  pthreadpool_t threadpool)
 {
   return reshape_mean_nd(
     mean_op,
     num_reduction_axes, reduction_axes,
     num_input_dims, input_shape,
+    workspace_size, workspace_alignment,
     /*log2_data_element_size=*/XNN_LOG2_SIZEOF_FLOAT,
     /*log2_accumulator_element_size=*/XNN_LOG2_SIZEOF_FLOAT,
     xnn_operator_type_mean_nd_f32,
@@ -359,10 +369,11 @@ enum xnn_status xnn_reshape_mean_nd_f32(
 }
 
 static enum xnn_status setup_mean_nd(
-    xnn_operator_t mean_op,
-    const float* input,
-    float* output,
-    enum xnn_operator_type expected_operator_type)
+  xnn_operator_t mean_op,
+  void* workspace,
+  const float* input,
+  float* output,
+  enum xnn_operator_type expected_operator_type)
 {
   if (mean_op->type != expected_operator_type) {
     xnn_log_error("failed to setup operator: operator type mismatch (expected %s, got %s)",
@@ -394,6 +405,14 @@ static enum xnn_status setup_mean_nd(
     assert(mean_op->ukernel.type == xnn_microkernel_type_global_average_pooling);
     mean_op->context.global_average_pooling_nwc.input = input;
     mean_op->context.global_average_pooling_nwc.output = output;
+
+    if (mean_op->context.global_average_pooling_nwc.buffer_size != 0 && workspace == NULL) {
+      xnn_log_error(
+        "failed to setup %s operator: workspace of size %zu required but workspace is NULL",
+        xnn_operator_type_to_string(mean_op->type),
+        mean_op->context.global_average_pooling_nwc.buffer_size);
+    }
+    mean_op->context.global_average_pooling_nwc.multipass_buffer = workspace;
   }
   mean_op->state = xnn_run_state_ready;
 
@@ -401,23 +420,27 @@ static enum xnn_status setup_mean_nd(
 }
 
 enum xnn_status xnn_setup_mean_nd_f16(
-    xnn_operator_t mean_op,
-    const void* input,
-    void* output)
+  xnn_operator_t mean_op,
+  void* workspace,
+  const void* input,
+  void* output)
 {
   return setup_mean_nd(
     mean_op,
+    workspace,
     input, output,
     xnn_operator_type_mean_nd_f16);
 }
 
 enum xnn_status xnn_setup_mean_nd_f32(
-    xnn_operator_t mean_op,
-    const float* input,
-    float* output)
+  xnn_operator_t mean_op,
+  void* workspace,
+  const float* input,
+  float* output)
 {
   return setup_mean_nd(
     mean_op,
+    workspace,
     input, output,
     xnn_operator_type_mean_nd_f32);
 }

@@ -11,7 +11,9 @@
 #include <iostream>
 #include <limits>
 #include <random>
+#include <vector>
 
+#include <xnnpack/aligned-allocator.h>
 #include <xnnpack/cache.h>
 #include <xnnpack/common.h>
 #include <xnnpack/models.h>
@@ -2492,9 +2494,12 @@ ExecutionPlan FP32SparseMobileNetV2(float sparsity, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  size_t op63_workspace_size = 0;
+  size_t op63_workspace_alignment = 0;
   status = xnn_reshape_convolution2d_nhwc_f32(
     op63,
     /*batch_size=*/1, /*input_height=*/1, /*input_width=*/1,
+    &op63_workspace_size, &op63_workspace_alignment,
     /*output_height_out=*/nullptr, /*output_width_out=*/nullptr,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
@@ -3006,8 +3011,10 @@ ExecutionPlan FP32SparseMobileNetV2(float sparsity, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op63_workspace(op63_workspace_size);
   status = xnn_setup_convolution2d_nhwc_f32(
     op63,
+    op63_workspace.data(),
     /*input=*/v63.data(), /*output=*/v64.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #63" << std::endl;

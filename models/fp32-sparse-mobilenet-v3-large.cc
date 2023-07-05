@@ -11,7 +11,9 @@
 #include <iostream>
 #include <limits>
 #include <random>
+#include <vector>
 
+#include <xnnpack/aligned-allocator.h>
 #include <xnnpack/cache.h>
 #include <xnnpack/common.h>
 #include <xnnpack/models.h>
@@ -3845,9 +3847,12 @@ ExecutionPlan FP32SparseMobileNetV3Large(float sparsity, pthreadpool_t threadpoo
     return ExecutionPlan();
   }
 
+  size_t op109_workspace_size = 0;
+  size_t op109_workspace_alignment = 0;
   status = xnn_reshape_convolution2d_nhwc_f32(
     op109,
     /*batch_size=*/1, /*input_height=*/1, /*input_width=*/1,
+    &op109_workspace_size, &op109_workspace_alignment,
     /*output_height_out=*/nullptr, /*output_width_out=*/nullptr,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
@@ -3864,18 +3869,24 @@ ExecutionPlan FP32SparseMobileNetV3Large(float sparsity, pthreadpool_t threadpoo
     return ExecutionPlan();
   }
 
+  size_t op111_workspace_size = 0;
+  size_t op111_workspace_alignment = 0;
   status = xnn_reshape_global_average_pooling_nwc_f32(
     op111,
     /*batch_size=*/1, 1 /* width */,
+    &op111_workspace_size, &op111_workspace_alignment,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
     std::cerr << "failed to reshape operation #111" << std::endl;
     return ExecutionPlan();
   }
 
+  size_t op112_workspace_size = 0;
+  size_t op112_workspace_alignment = 0;
   status = xnn_reshape_convolution2d_nhwc_f32(
     op112,
     /*batch_size=*/1, /*input_height=*/1, /*input_width=*/1,
+    &op112_workspace_size, &op112_workspace_alignment,
     /*output_height_out=*/nullptr, /*output_width_out=*/nullptr,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
@@ -4755,8 +4766,10 @@ ExecutionPlan FP32SparseMobileNetV3Large(float sparsity, pthreadpool_t threadpoo
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op109_workspace(op109_workspace_size);
   status = xnn_setup_convolution2d_nhwc_f32(
     op109,
+    op109_workspace.data(),
     /*input=*/v109.data(), /*output=*/v110.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #109" << std::endl;
@@ -4771,16 +4784,20 @@ ExecutionPlan FP32SparseMobileNetV3Large(float sparsity, pthreadpool_t threadpoo
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op111_workspace(op111_workspace_size);
   status = xnn_setup_global_average_pooling_nwc_f32(
     op111,
+    op111_workspace.data(),
     /*input=*/v111.data(), /*output=*/v112.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #111" << std::endl;
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op112_workspace(op112_workspace_size);
   status = xnn_setup_convolution2d_nhwc_f32(
     op112,
+    op112_workspace.data(),
     /*input=*/v112.data(), /*output=*/v113.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #112" << std::endl;

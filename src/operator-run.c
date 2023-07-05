@@ -688,12 +688,10 @@ void xnn_compute_dwconv_multipass(
   void* output = (void*) ((uintptr_t) context->output +
     batch_index * context->output_batch_stride + output_y * context->output_height_stride);
 
-  void* multipass_buffer = XNN_SIMD_ALLOCA(context->buffer_size);
-
   context->multipass_ukernel(
     context->groups, context->output_width, indirect_input, context->packed_weights, output,
     context->indirect_input_width_stride, context->output_increment, input_offset, context->zero, context->kernel_size,
-    multipass_buffer, &context->params);
+    context->multipass_buffer, &context->params);
 }
 
 void xnn_compute_dwconv2d_chw(
@@ -744,12 +742,9 @@ void xnn_compute_argmax_pooling_multipass(
   uint32_t* index = (uint32_t*) ((uintptr_t) context->index +
     batch_index * context->index_batch_stride + output_y * context->index_height_stride);
 
-  void* multipass_accumulation_buffer = XNN_SIMD_ALLOCA(context->accumulation_buffer_size);
-  void* multipass_index_buffer = XNN_SIMD_ALLOCA(context->index_buffer_size);
-
   context->multipass_ukernel(
     context->output_width, context->pooling_size, context->channels,
-    indirect_input, input_offset, multipass_accumulation_buffer, multipass_index_buffer, output, index,
+    indirect_input, input_offset, context->accumulation_buffer, context->index_buffer, output, index,
     context->input_increment, context->output_increment);
 }
 
@@ -820,11 +815,9 @@ void xnn_compute_average_pooling_multipass(
   void* output = (void*) ((uintptr_t) context->output +
     batch_index * context->output_batch_stride + output_y * context->output_height_stride);
 
-  void* multipass_buffer = XNN_SIMD_ALLOCA(context->buffer_size);
-
   context->multipass_ukernel(
     context->output_width, context->pooling_size, context->channels,
-    indirect_input, input_offset, context->zero, multipass_buffer, output,
+    indirect_input, input_offset, context->zero, context->multipass_buffer, output,
     context->input_increment, context->output_increment,
     &context->params);
 }
@@ -862,11 +855,9 @@ void xnn_compute_pixelwise_average_pooling_multipass(
   void* output = (void*) ((uintptr_t) context->output +
     batch_index * context->output_batch_stride + output_y * context->output_height_stride);
 
-  void* multipass_buffer = XNN_SIMD_ALLOCA(context->buffer_size);
-
   context->multipass_ukernel(
     context->output_width, context->pooling_size, context->channels,
-    indirect_input, input_offset, context->zero, pixelwise_buffer, multipass_buffer, output,
+    indirect_input, input_offset, context->zero, pixelwise_buffer, context->multipass_buffer, output,
     context->input_increment, context->output_increment,
     &context->params);
 }
@@ -899,15 +890,13 @@ void xnn_compute_global_average_pooling_nwc_multipass(
   void* output =
     (void*) ((uintptr_t) context->output + batch_index * context->output_batch_stride);
 
-  void* multipass_buffer = XNN_SIMD_ALLOCA(context->buffer_size);
-
   context->multipass_ukernel(
     context->input_elements,
     context->channels,
     input,
     context->input_pixel_stride,
     context->zero,
-    multipass_buffer,
+    context->multipass_buffer,
     output,
     &context->params);
 }

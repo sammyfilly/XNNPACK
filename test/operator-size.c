@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
       break;
     case 4:
       xnn_setup_argmax_pooling2d_nhwc_f32(
-        op, NULL, NULL, NULL);
+        op, NULL, NULL, NULL, NULL);
       break;
     case 5:
       xnn_create_average_pooling2d_nhwc_f32(
@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
       break;
     case 6:
       xnn_setup_average_pooling2d_nhwc_f32(
-        op, NULL, NULL);
+        op, NULL, NULL, NULL);
       break;
     case 7:
       xnn_create_clamp_nc_f32(
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
       break;
     case 10:
       xnn_setup_convolution2d_nhwc_f32(
-        op, NULL, NULL);
+        op, NULL, NULL, NULL);
       break;
     case 11:
       xnn_create_deconvolution2d_nhwc_f32(
@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
       break;
     case 18:
       xnn_setup_global_average_pooling_nwc_f32(
-        op, NULL, NULL);
+        op, NULL, NULL, NULL);
       break;
     case 19:
       xnn_create_hardswish_nc_f32(
