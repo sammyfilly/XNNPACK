@@ -66,6 +66,8 @@ static enum xnn_status reshape_argmax_pooling_operator(
     opdata->batch_size,
     opdata->input_height,
     opdata->input_width,
+    &opdata->workspace_size,
+    &opdata->workspace_alignment,
     threadpool);
 }
 
@@ -101,6 +103,7 @@ static enum xnn_status setup_argmax_pooling_operator(
 
   return xnn_setup_argmax_pooling2d_nhwc_f32(
     opdata->operator_objects[0],
+    opdata->workspace,
     input_data,
     output_value_data,
     output_index_data);

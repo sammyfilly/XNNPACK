@@ -1755,10 +1755,13 @@ enum xnn_status xnn_reshape_argmax_pooling2d_nhwc_f32(
   size_t batch_size,
   size_t input_height,
   size_t input_width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
   pthreadpool_t threadpool);
 
 enum xnn_status xnn_setup_argmax_pooling2d_nhwc_f32(
   xnn_operator_t argmax_pooling_op,
+  void* workspace,
   const float* input,
   float* output,
   uint32_t* index);
@@ -1785,12 +1788,15 @@ enum xnn_status xnn_reshape_average_pooling2d_nhwc_f32(
   size_t batch_size,
   size_t input_height,
   size_t input_width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
   size_t* output_height_out,
   size_t* output_width_out,
   pthreadpool_t threadpool);
 
 enum xnn_status xnn_setup_average_pooling2d_nhwc_f32(
   xnn_operator_t average_pooling_op,
+  void* workspace,
   const float* input,
   float* output);
 
@@ -2189,10 +2195,13 @@ enum xnn_status xnn_reshape_global_average_pooling_nwc_f32(
   xnn_operator_t global_average_pooling_op,
   size_t batch_size,
   size_t width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
   pthreadpool_t threadpool);
 
 enum xnn_status xnn_setup_global_average_pooling_nwc_f32(
   xnn_operator_t global_average_pooling_op,
+  void* workspace,
   const float* input,
   float* output);
 
@@ -2209,10 +2218,13 @@ enum xnn_status xnn_reshape_global_sum_pooling_nwc_f32(
   xnn_operator_t global_sum_pooling_op,
   size_t batch_size,
   size_t width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
   pthreadpool_t threadpool);
 
 enum xnn_status xnn_setup_global_sum_pooling_nwc_f32(
   xnn_operator_t global_sum_pooling_op,
+  void* workspace,
   const float* input,
   float* output);
 
@@ -2344,10 +2356,13 @@ enum xnn_status xnn_reshape_mean_nd_f32(
   const size_t* reduction_axes,
   size_t num_input_dims,
   const size_t* input_shape,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
   pthreadpool_t threadpool);
 
 enum xnn_status xnn_setup_mean_nd_f32(
   xnn_operator_t mean_op,
+  void* workspace,
   const float* input,
   float* output);
 
@@ -3074,12 +3089,15 @@ enum xnn_status xnn_reshape_average_pooling2d_nhwc_f16(
   size_t batch_size,
   size_t input_height,
   size_t input_width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
   size_t* output_height_out,
   size_t* output_width_out,
   pthreadpool_t threadpool);
 
 enum xnn_status xnn_setup_average_pooling2d_nhwc_f16(
   xnn_operator_t average_pooling_op,
+  void* workspace,
   const void* input,
   void* output);
 
@@ -3333,10 +3351,13 @@ enum xnn_status xnn_reshape_global_average_pooling_nwc_f16(
   xnn_operator_t global_average_pooling_op,
   size_t batch_size,
   size_t width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
   pthreadpool_t threadpool);
 
 enum xnn_status xnn_setup_global_average_pooling_nwc_f16(
   xnn_operator_t global_average_pooling_op,
+  void* workspace,
   const void* input,
   void* output);
 
@@ -3353,10 +3374,13 @@ enum xnn_status xnn_reshape_global_sum_pooling_nwc_f16(
   xnn_operator_t global_sum_pooling_op,
   size_t batch_size,
   size_t width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
   pthreadpool_t threadpool);
 
 enum xnn_status xnn_setup_global_sum_pooling_nwc_f16(
   xnn_operator_t global_sum_pooling_op,
+  void* workspace,
   const void* input,
   void* output);
 
@@ -3456,10 +3480,13 @@ enum xnn_status xnn_reshape_mean_nd_f16(
   const size_t* reduction_axes,
   size_t num_input_dims,
   const size_t* input_shape,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
   pthreadpool_t threadpool);
 
 enum xnn_status xnn_setup_mean_nd_f16(
   xnn_operator_t mean_op,
+  void* workspace,
   const void* input,
   void* output);
 
@@ -4183,10 +4210,13 @@ enum xnn_status xnn_reshape_global_average_pooling_nwc_qs8(
   xnn_operator_t global_average_pooling_op,
   size_t batch_size,
   size_t width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
   pthreadpool_t threadpool);
 
 enum xnn_status xnn_setup_global_average_pooling_nwc_qs8(
   xnn_operator_t global_average_pooling_op,
+  void* workspace,
   const int8_t* input,
   int8_t* output);
 
@@ -4419,12 +4449,15 @@ enum xnn_status xnn_reshape_average_pooling2d_nhwc_qu8(
   size_t batch_size,
   size_t input_height,
   size_t input_width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
   size_t* output_height_out,
   size_t* output_width_out,
   pthreadpool_t threadpool);
 
 enum xnn_status xnn_setup_average_pooling2d_nhwc_qu8(
   xnn_operator_t average_pooling_op,
+  void* workspace,
   const uint8_t* input,
   uint8_t* output);
 
@@ -4567,10 +4600,13 @@ enum xnn_status xnn_reshape_global_average_pooling_nwc_qu8(
   xnn_operator_t global_average_pooling_op,
   size_t batch_size,
   size_t width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
   pthreadpool_t threadpool);
 
 enum xnn_status xnn_setup_global_average_pooling_nwc_qu8(
   xnn_operator_t global_average_pooling_op,
+  void* workspace,
   const uint8_t* input,
   uint8_t* output);
 

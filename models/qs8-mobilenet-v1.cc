@@ -11,7 +11,9 @@
 #include <iostream>
 #include <limits>
 #include <random>
+#include <vector>
 
+#include <xnnpack/aligned-allocator.h>
 #include <xnnpack/cache.h>
 #include <xnnpack/common.h>
 #include <xnnpack/models.h>
@@ -1184,9 +1186,12 @@ ExecutionPlan QS8MobileNetV1(pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  size_t op27_workspace_size = 0;
+  size_t op27_workspace_alignment = 0;
   status = xnn_reshape_global_average_pooling_nwc_qs8(
     op27,
     /*batch_size=*/1, 49 /* width */,
+    &op27_workspace_size, &op27_workspace_alignment,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
     std::cerr << "failed to reshape operation #27" << std::endl;
@@ -1419,8 +1424,10 @@ ExecutionPlan QS8MobileNetV1(pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op27_workspace(op27_workspace_size);
   status = xnn_setup_global_average_pooling_nwc_qs8(
     op27,
+    op27_workspace.data(),
     /*input=*/v27.data(), /*output=*/v28.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #27" << std::endl;
