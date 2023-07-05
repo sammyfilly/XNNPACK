@@ -741,6 +741,7 @@ struct average_pooling_context {
     xnn_avgpool_multipass_ukernel_fn multipass_ukernel;
   };
   size_t buffer_size;
+  void* multipass_buffer;
 };
 
 #ifndef __cplusplus
@@ -781,6 +782,7 @@ struct pixelwise_average_pooling_context {
     xnn_pavgpool_multipass_ukernel_fn multipass_ukernel;
   };
   size_t buffer_size;
+  void* multipass_buffer;
 };
 
 #ifndef __cplusplus
@@ -815,6 +817,7 @@ struct global_average_pooling_nwc_context {
     xnn_gavgpool_multipass_ukernel_fn multipass_ukernel;
   };
   size_t buffer_size;
+  void* multipass_buffer;
 };
 
 #ifndef __cplusplus

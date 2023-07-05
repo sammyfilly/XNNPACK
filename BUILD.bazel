@@ -17,8 +17,10 @@ exports_files(["LICENSE"])
 
 OPERATOR_BENCHMARK_DEPS = [
     ":XNNPACK",
+    ":aligned_allocator",
     ":bench_utils",
     ":cache",
+    ":common",
     "@FP16",
 ]
 
@@ -6615,6 +6617,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@FP16",
         "@pthreadpool",
@@ -6628,6 +6631,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@pthreadpool",
     ],
@@ -6664,6 +6668,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@pthreadpool",
     ],
@@ -6676,6 +6681,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@pthreadpool",
     ],
@@ -6688,6 +6694,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@pthreadpool",
     ],
@@ -6700,6 +6707,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@pthreadpool",
     ],
@@ -6712,6 +6720,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@pthreadpool",
     ],
@@ -6724,6 +6733,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@pthreadpool",
     ],
@@ -6736,6 +6746,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@FP16",
         "@pthreadpool",
@@ -6749,6 +6760,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@pthreadpool",
     ],
@@ -6785,6 +6797,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@FP16",
         "@pthreadpool",
@@ -6798,6 +6811,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@pthreadpool",
     ],
@@ -6810,6 +6824,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@pthreadpool",
     ],
@@ -6822,6 +6837,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@pthreadpool",
     ],
@@ -6834,6 +6850,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@FP16",
         "@pthreadpool",
@@ -6847,6 +6864,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@pthreadpool",
     ],
@@ -6859,6 +6877,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         ":post_operation",
         "@pthreadpool",
@@ -6872,6 +6891,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@pthreadpool",
     ],
@@ -6884,6 +6904,7 @@ xnnpack_cc_library(
     copts = xnnpack_std_cxxopts(),
     deps = [
         ":XNNPACK",
+        ":aligned_allocator",
         ":cache",
         "@pthreadpool",
     ],
@@ -9748,7 +9769,9 @@ xnnpack_unit_test(
         "test/average-pooling-operator-tester.h",
     ],
     shard_count = 5,
-    deps = OPERATOR_TEST_DEPS,
+    deps = OPERATOR_TEST_DEPS + [
+        ":aligned_allocator",
+    ],
 )
 
 xnnpack_unit_test(
@@ -10014,7 +10037,7 @@ xnnpack_unit_test(
         "test/global-average-pooling-nwc.cc",
         "test/global-average-pooling-operator-tester.h",
     ],
-    deps = OPERATOR_TEST_DEPS,
+    deps = OPERATOR_TEST_DEPS + [":aligned_allocator"],
 )
 
 xnnpack_unit_test(
@@ -10023,7 +10046,7 @@ xnnpack_unit_test(
         "test/global-average-pooling-ncw.cc",
         "test/global-average-pooling-operator-tester.h",
     ],
-    deps = OPERATOR_TEST_DEPS,
+    deps = OPERATOR_TEST_DEPS + [":aligned_allocator"],
 )
 
 xnnpack_unit_test(
@@ -10033,7 +10056,7 @@ xnnpack_unit_test(
         "test/global-sum-pooling-operator-tester.h",
     ],
     shard_count = 10,
-    deps = OPERATOR_TEST_DEPS,
+    deps = OPERATOR_TEST_DEPS + [":aligned_allocator"],
 )
 
 xnnpack_unit_test(
@@ -10109,7 +10132,9 @@ xnnpack_unit_test(
         "test/mean-nd.cc",
         "test/mean-operator-tester.h",
     ],
-    deps = OPERATOR_TEST_DEPS,
+    deps = OPERATOR_TEST_DEPS + [
+        ":aligned_allocator",
+    ],
 )
 
 xnnpack_unit_test(
@@ -10535,6 +10560,8 @@ xnnpack_unit_test(
     ],
     deps = [
         ":XNNPACK_test_mode",
+        ":aligned_allocator",
+        ":common",
         ":node_type",
         ":operator_utils",
         ":operators_test_mode",
@@ -10827,6 +10854,7 @@ xnnpack_unit_test(
     ],
     deps = [
         ":XNNPACK_test_mode",
+        ":aligned_allocator",
         ":node_type",
         ":operators_test_mode",
         ":requantization",
@@ -10841,6 +10869,7 @@ xnnpack_unit_test(
     ],
     deps = [
         ":XNNPACK_test_mode",
+        ":aligned_allocator",
         ":node_type",
         ":operators_test_mode",
         ":requantization",
@@ -10855,6 +10884,7 @@ xnnpack_unit_test(
     ],
     deps = [
         ":XNNPACK_test_mode",
+        ":aligned_allocator",
         ":node_type",
         ":operators_test_mode",
         ":subgraph_test_mode",
@@ -10868,6 +10898,7 @@ xnnpack_unit_test(
     ],
     deps = [
         ":XNNPACK_test_mode",
+        ":aligned_allocator",
         ":node_type",
         ":operators_test_mode",
         ":subgraph_test_mode",
@@ -11106,6 +11137,8 @@ xnnpack_unit_test(
     ],
     deps = [
         ":XNNPACK_test_mode",
+        ":aligned_allocator",
+        ":common",
         ":node_type",
         ":operators_test_mode",
         ":subgraph_test_mode",

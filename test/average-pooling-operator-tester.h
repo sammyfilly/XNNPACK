@@ -22,6 +22,8 @@
 #include <vector>
 
 #include <xnnpack.h>
+#include <xnnpack/aligned-allocator.h>
+#include <xnnpack/common.h>
 
 
 class AveragePoolingOperatorTester {
@@ -525,16 +527,23 @@ class AveragePoolingOperatorTester {
       // Smart pointer to automatically delete average_pooling_op.
       std::unique_ptr<xnn_operator, decltype(&xnn_delete_operator)> auto_average_pooling_op(average_pooling_op, xnn_delete_operator);
 
+      size_t workspace_size = 0;
+      size_t workspace_alignment = 0;
       ASSERT_EQ(xnn_status_success,
         xnn_reshape_average_pooling2d_nhwc_f16(
           average_pooling_op,
           batch_size(), input_height(), input_width(),
+          &workspace_size, &workspace_alignment,
           /*output_height_out=*/nullptr, /*output_width_out=*/nullptr,
           nullptr /* thread pool */));
+
+      ASSERT_LE(workspace_alignment, XNN_ALLOCATION_ALIGNMENT);
+      std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> workspace(workspace_size);
 
       ASSERT_EQ(xnn_status_success,
         xnn_setup_average_pooling2d_nhwc_f16(
           average_pooling_op,
+          workspace.data(),
           input.data(), output.data()));
 
       ASSERT_EQ(xnn_status_success,
@@ -627,16 +636,23 @@ class AveragePoolingOperatorTester {
       // Smart pointer to automatically delete average_pooling_op.
       std::unique_ptr<xnn_operator, decltype(&xnn_delete_operator)> auto_average_pooling_op(average_pooling_op, xnn_delete_operator);
 
+      size_t workspace_size = 0;
+      size_t workspace_alignment = 0;
       ASSERT_EQ(xnn_status_success,
         xnn_reshape_average_pooling2d_nhwc_f32(
           average_pooling_op,
           batch_size(), input_height(), input_width(),
+          &workspace_size, &workspace_alignment,
           /*output_height_out=*/nullptr, /*output_width_out=*/nullptr,
           nullptr /* thread pool */));
+
+      ASSERT_LE(workspace_alignment, XNN_ALLOCATION_ALIGNMENT);
+      std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> workspace(workspace_size);
 
       ASSERT_EQ(xnn_status_success,
         xnn_setup_average_pooling2d_nhwc_f32(
           average_pooling_op,
+          workspace.data(),
           input.data(), output.data()));
 
       ASSERT_EQ(xnn_status_success,
@@ -718,16 +734,23 @@ class AveragePoolingOperatorTester {
       // Smart pointer to automatically delete average_pooling_op.
       std::unique_ptr<xnn_operator, decltype(&xnn_delete_operator)> auto_average_pooling_op(average_pooling_op, xnn_delete_operator);
 
+      size_t workspace_size = 0;
+      size_t workspace_alignment = 0;
       ASSERT_EQ(xnn_status_success,
         xnn_reshape_average_pooling2d_nhwc_qu8(
           average_pooling_op,
           batch_size(), input_height(), input_width(),
+          &workspace_size, &workspace_alignment,
           /*output_height_out=*/nullptr, /*output_width_out=*/nullptr,
           nullptr /* thread pool */));
+
+      ASSERT_LE(workspace_alignment, XNN_ALLOCATION_ALIGNMENT);
+      std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> workspace(workspace_size);
 
       ASSERT_EQ(xnn_status_success,
         xnn_setup_average_pooling2d_nhwc_qu8(
           average_pooling_op,
+          workspace.data(),
           input.data(), output.data()));
 
       ASSERT_EQ(xnn_status_success,
@@ -831,16 +854,23 @@ class AveragePoolingOperatorTester {
       ASSERT_EQ(xnn_status_success, status);
       ASSERT_NE(nullptr, average_pooling_op);
 
+      size_t workspace_size = 0;
+      size_t workspace_alignment = 0;
       ASSERT_EQ(xnn_status_success,
         xnn_reshape_average_pooling2d_nhwc_f16(
           average_pooling_op,
           batch_size(), input_height(), input_width(),
+          &workspace_size, &workspace_alignment,
           /*output_height_out=*/nullptr, /*output_width_out=*/nullptr,
           nullptr /* thread pool */));
+
+      ASSERT_LE(workspace_alignment, XNN_ALLOCATION_ALIGNMENT);
+      std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> workspace(workspace_size);
 
       ASSERT_EQ(xnn_status_success,
         xnn_setup_average_pooling2d_nhwc_f16(
           average_pooling_op,
+          workspace.data(),
           input.data(), output.data()));
 
       ASSERT_EQ(xnn_status_success,
@@ -892,15 +922,23 @@ class AveragePoolingOperatorTester {
       }
 
       // Setup and run Average Pooling operator the second time, and destroy the operator.
+      size_t next_workspace_size = 0;
+      size_t next_workspace_alignment = 0;
       ASSERT_EQ(xnn_status_success,
         xnn_reshape_average_pooling2d_nhwc_f16(
           average_pooling_op,
           next_batch_size(), next_input_height(), next_input_width(),
+          &next_workspace_size, &next_workspace_alignment,
           /*output_height_out=*/nullptr, /*output_width_out=*/nullptr,
           nullptr /* thread pool */));
+
+      ASSERT_LE(next_workspace_alignment, XNN_ALLOCATION_ALIGNMENT);
+      std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> next_workspace(next_workspace_size);
+
       ASSERT_EQ(xnn_status_success,
         xnn_setup_average_pooling2d_nhwc_f16(
           average_pooling_op,
+          next_workspace.data(),
           input.data(), output.data()));
 
       ASSERT_EQ(xnn_status_success,
@@ -999,16 +1037,23 @@ class AveragePoolingOperatorTester {
           0, &average_pooling_op));
       ASSERT_NE(nullptr, average_pooling_op);
 
+      size_t workspace_size = 0;
+      size_t workspace_alignment = 0;
       ASSERT_EQ(xnn_status_success,
         xnn_reshape_average_pooling2d_nhwc_f32(
           average_pooling_op,
           batch_size(), input_height(), input_width(),
+          &workspace_size, &workspace_alignment,
           /*output_height_out=*/nullptr, /*output_width_out=*/nullptr,
           nullptr /* thread pool */));
+
+      ASSERT_LE(workspace_alignment, XNN_ALLOCATION_ALIGNMENT);
+      std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> workspace(workspace_size);
 
       ASSERT_EQ(xnn_status_success,
         xnn_setup_average_pooling2d_nhwc_f32(
           average_pooling_op,
+          workspace.data(),
           input.data(), output.data()));
 
       ASSERT_EQ(xnn_status_success,
@@ -1059,15 +1104,21 @@ class AveragePoolingOperatorTester {
       }
 
       // Setup and run Average Pooling operator the second time, and destroy the operator.
+      size_t next_workspace_size = 0;
+      size_t next_workspace_alignment = 0;
       ASSERT_EQ(xnn_status_success,
         xnn_reshape_average_pooling2d_nhwc_f32(
           average_pooling_op,
           next_batch_size(), next_input_height(), next_input_width(),
+          &next_workspace_size, &next_workspace_alignment,
           /*output_height_out=*/nullptr, /*output_width_out=*/nullptr,
           nullptr /* thread pool */));
+      ASSERT_LE(next_workspace_alignment, XNN_ALLOCATION_ALIGNMENT);
+      std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> next_workspace(next_workspace_size);
       ASSERT_EQ(xnn_status_success,
         xnn_setup_average_pooling2d_nhwc_f32(
           average_pooling_op,
+          next_workspace.data(),
           input.data(), output.data()));
 
       ASSERT_EQ(xnn_status_success,
@@ -1155,16 +1206,23 @@ class AveragePoolingOperatorTester {
           0, &average_pooling_op));
       ASSERT_NE(nullptr, average_pooling_op);
 
+      size_t workspace_size = 0;
+      size_t workspace_alignment = 0;
       ASSERT_EQ(xnn_status_success,
         xnn_reshape_average_pooling2d_nhwc_qu8(
           average_pooling_op,
           batch_size(), input_height(), input_width(),
+          &workspace_size, &workspace_alignment,
           /*output_height_out=*/nullptr, /*output_width_out=*/nullptr,
           nullptr /* thread pool */));
+
+      ASSERT_LE(workspace_alignment, XNN_ALLOCATION_ALIGNMENT);
+      std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> workspace(workspace_size);
 
       ASSERT_EQ(xnn_status_success,
         xnn_setup_average_pooling2d_nhwc_qu8(
           average_pooling_op,
+          workspace.data(),
           input.data(), output.data()));
 
       ASSERT_EQ(xnn_status_success,
@@ -1215,15 +1273,23 @@ class AveragePoolingOperatorTester {
       }
 
       // Setup and run Average Pooling operator the second time, and destroy the operator.
+      size_t next_workspace_size = 0;
+      size_t next_workspace_alignment = 0;
       ASSERT_EQ(xnn_status_success,
         xnn_reshape_average_pooling2d_nhwc_qu8(
           average_pooling_op,
           next_batch_size(), next_input_height(), next_input_width(),
+          &next_workspace_size, &next_workspace_alignment,
           /*output_height_out=*/nullptr, /*output_width_out=*/nullptr,
           nullptr /* thread pool */));
+
+      ASSERT_LE(next_workspace_alignment, XNN_ALLOCATION_ALIGNMENT);
+      std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> next_workspace(next_workspace_size);
+
       ASSERT_EQ(xnn_status_success,
         xnn_setup_average_pooling2d_nhwc_qu8(
           average_pooling_op,
+          next_workspace.data(),
           input.data(), output.data()));
 
       ASSERT_EQ(xnn_status_success,
