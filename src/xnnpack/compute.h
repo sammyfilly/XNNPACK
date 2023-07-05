@@ -815,6 +815,7 @@ struct global_average_pooling_nwc_context {
     xnn_gavgpool_multipass_ukernel_fn multipass_ukernel;
   };
   size_t buffer_size;
+  void* multipass_buffer;
 };
 
 #ifndef __cplusplus

@@ -11,8 +11,9 @@
 #include <iostream>
 #include <limits>
 #include <random>
-#include <iostream>
+#include <vector>
 
+#include <xnnpack/aligned-allocator.h>
 #include <xnnpack/cache.h>
 #include <xnnpack/common.h>
 #include <xnnpack/memory.h>
@@ -2433,6 +2434,18 @@ ExecutionPlan FP32MobileNetV2(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  size_t op62_workspace_size = 0;
+  size_t op62_workspace_alignment = 0;
+  status = xnn_reshape_global_average_pooling_nwc_f32(
+    op62,
+    /*batch_size=*/1, 49 /* width */,
+    &op62_workspace_size, &op62_workspace_alignment,
+    /*threadpool=*/threadpool);
+  if (status != xnn_status_success) {
+    std::cerr << "failed to reshape operation #62" << std::endl;
+    return ExecutionPlan();
+  }
+
   status = xnn_reshape_convolution2d_nhwc_f32(
     op63,
     /*batch_size=*/1, /*input_height=*/1, /*input_width=*/1,
@@ -2939,8 +2952,10 @@ ExecutionPlan FP32MobileNetV2(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op62_workspace(op62_workspace_size);
   status = xnn_setup_global_average_pooling_nwc_f32(
     op62,
+    op62_workspace.data(),
     /*input=*/v62.data(), /*output=*/v63.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #62" << std::endl;

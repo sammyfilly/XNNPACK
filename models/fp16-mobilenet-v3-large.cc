@@ -11,7 +11,9 @@
 #include <iostream>
 #include <limits>
 #include <random>
+#include <vector>
 
+#include <xnnpack/aligned-allocator.h>
 #include <xnnpack/cache.h>
 #include <xnnpack/common.h>
 #include <xnnpack/models.h>
@@ -2804,9 +2806,12 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  size_t op14_workspace_size = 0;
+  size_t op14_workspace_alignment = 0;
   status = xnn_reshape_global_average_pooling_nwc_f16(
     op14,
     /*batch_size=*/1, 784 /* width */,
+    &op14_workspace_size, &op14_workspace_alignment,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
     std::cerr << "failed to reshape operation #14" << std::endl;
@@ -2876,9 +2881,12 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  size_t op21_workspace_size = 0;
+  size_t op21_workspace_alignment = 0;
   status = xnn_reshape_global_average_pooling_nwc_f16(
     op21,
     /*batch_size=*/1, 784 /* width */,
+    &op21_workspace_size, &op21_workspace_alignment,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
     std::cerr << "failed to reshape operation #21" << std::endl;
@@ -2961,9 +2969,12 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  size_t op29_workspace_size = 0;
+  size_t op29_workspace_alignment = 0;
   status = xnn_reshape_global_average_pooling_nwc_f16(
     op29,
     /*batch_size=*/1, 784 /* width */,
+    &op29_workspace_size, &op29_workspace_alignment,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
     std::cerr << "failed to reshape operation #29" << std::endl;
@@ -3295,9 +3306,12 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  size_t op62_workspace_size = 0;
+  size_t op62_workspace_alignment = 0;
   status = xnn_reshape_global_average_pooling_nwc_f16(
     op62,
     /*batch_size=*/1, 196 /* width */,
+    &op62_workspace_size, &op62_workspace_alignment,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
     std::cerr << "failed to reshape operation #62" << std::endl;
@@ -3385,9 +3399,12 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  size_t op71_workspace_size = 0;
+  size_t op71_workspace_alignment = 0;
   status = xnn_reshape_global_average_pooling_nwc_f16(
     op71,
     /*batch_size=*/1, 196 /* width */,
+    &op71_workspace_size, &op71_workspace_alignment,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
     std::cerr << "failed to reshape operation #71" << std::endl;
@@ -3488,9 +3505,12 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  size_t op81_workspace_size = 0;
+  size_t op81_workspace_alignment = 0;
   status = xnn_reshape_global_average_pooling_nwc_f16(
     op81,
     /*batch_size=*/1, 49 /* width */,
+    &op81_workspace_size, &op81_workspace_alignment,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
     std::cerr << "failed to reshape operation #81" << std::endl;
@@ -3578,9 +3598,12 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  size_t op90_workspace_size = 0;
+  size_t op90_workspace_alignment = 0;
   status = xnn_reshape_global_average_pooling_nwc_f16(
     op90,
     /*batch_size=*/1, 49 /* width */,
+    &op90_workspace_size, &op90_workspace_alignment,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
     std::cerr << "failed to reshape operation #90" << std::endl;
@@ -3681,9 +3704,12 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  size_t op100_workspace_size = 0;
+  size_t op100_workspace_alignment = 0;
   status = xnn_reshape_global_average_pooling_nwc_f16(
     op100,
     /*batch_size=*/1, 49 /* width */,
+    &op100_workspace_size, &op100_workspace_alignment,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
     std::cerr << "failed to reshape operation #100" << std::endl;
@@ -3765,9 +3791,12 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  size_t op108_workspace_size = 0;
+  size_t op108_workspace_alignment = 0;
   status = xnn_reshape_global_average_pooling_nwc_f16(
     op108,
     /*batch_size=*/1, 49 /* width */,
+    &op108_workspace_size, &op108_workspace_alignment,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
     std::cerr << "failed to reshape operation #108" << std::endl;
@@ -3793,9 +3822,12 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  size_t op111_workspace_size = 0;
+  size_t op111_workspace_alignment = 0;
   status = xnn_reshape_global_average_pooling_nwc_f16(
     op111,
     /*batch_size=*/1, 1 /* width */,
+    &op111_workspace_size, &op111_workspace_alignment,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
     std::cerr << "failed to reshape operation #111" << std::endl;
@@ -3924,8 +3956,10 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op14_workspace(op14_workspace_size);
   status = xnn_setup_global_average_pooling_nwc_f16(
     op14,
+    op14_workspace.data(),
     /*input=*/v14.data(), /*output=*/v15.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #14" << std::endl;
@@ -3980,8 +4014,10 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op21_workspace(op21_workspace_size);
   status = xnn_setup_global_average_pooling_nwc_f16(
     op21,
+    op21_workspace.data(),
     /*input=*/v21.data(), /*output=*/v22.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #21" << std::endl;
@@ -4044,8 +4080,10 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op29_workspace(op29_workspace_size);
   status = xnn_setup_global_average_pooling_nwc_f16(
     op29,
+    op29_workspace.data(),
     /*input=*/v29.data(), /*output=*/v30.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #29" << std::endl;
@@ -4308,8 +4346,10 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op62_workspace(op62_workspace_size);
   status = xnn_setup_global_average_pooling_nwc_f16(
     op62,
+    op62_workspace.data(),
     /*input=*/v62.data(), /*output=*/v63.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #62" << std::endl;
@@ -4380,8 +4420,10 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op71_workspace(op71_workspace_size);
   status = xnn_setup_global_average_pooling_nwc_f16(
     op71,
+    op71_workspace.data(),
     /*input=*/v71.data(), /*output=*/v72.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #71" << std::endl;
@@ -4460,8 +4502,10 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op81_workspace(op81_workspace_size);
   status = xnn_setup_global_average_pooling_nwc_f16(
     op81,
+    op81_workspace.data(),
     /*input=*/v81.data(), /*output=*/v82.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #81" << std::endl;
@@ -4532,8 +4576,10 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op90_workspace(op90_workspace_size);
   status = xnn_setup_global_average_pooling_nwc_f16(
     op90,
+    op90_workspace.data(),
     /*input=*/v90.data(), /*output=*/v91.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #90" << std::endl;
@@ -4612,8 +4658,10 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op100_workspace(op100_workspace_size);
   status = xnn_setup_global_average_pooling_nwc_f16(
     op100,
+    op100_workspace.data(),
     /*input=*/v100.data(), /*output=*/v101.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #100" << std::endl;
@@ -4676,8 +4724,10 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op108_workspace(op108_workspace_size);
   status = xnn_setup_global_average_pooling_nwc_f16(
     op108,
+    op108_workspace.data(),
     /*input=*/v108.data(), /*output=*/v109.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #108" << std::endl;
@@ -4700,8 +4750,10 @@ ExecutionPlan FP16MobileNetV3Large(bool use_jit, pthreadpool_t threadpool) {
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op111_workspace(op111_workspace_size);
   status = xnn_setup_global_average_pooling_nwc_f16(
     op111,
+    op111_workspace.data(),
     /*input=*/v111.data(), /*output=*/v112.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #111" << std::endl;

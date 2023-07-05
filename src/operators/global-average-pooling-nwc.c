@@ -456,17 +456,19 @@ enum xnn_status xnn_create_global_sum_pooling_nwc_f32(
 }
 
 static enum xnn_status reshape_global_average_pooling_nwc(
-    xnn_operator_t global_average_pooling_op,
-    size_t batch_size,
-    size_t width,
-    size_t log2_data_element_size,
-    size_t log2_accumulator_element_size,
-    const struct xnn_gavgpool_config gavgpool[restrict XNN_MIN_ELEMENTS(1)],
-    enum xnn_operator_type expected_operator_type,
-    const void* params,
-    size_t params_size,
-    void (*update_params)(xnn_operator_t, size_t),
-    pthreadpool_t threadpool)
+  xnn_operator_t global_average_pooling_op,
+  size_t batch_size,
+  size_t width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
+  size_t log2_data_element_size,
+  size_t log2_accumulator_element_size,
+  const struct xnn_gavgpool_config gavgpool[restrict XNN_MIN_ELEMENTS(1)],
+  enum xnn_operator_type expected_operator_type,
+  const void* params,
+  size_t params_size,
+  void (*update_params)(xnn_operator_t, size_t),
+  pthreadpool_t threadpool)
 {
   if (global_average_pooling_op->type != expected_operator_type) {
     xnn_log_error("failed to reshape operator: operator type mismatch (expected %s, got %s)",
@@ -516,12 +518,15 @@ static enum xnn_status reshape_global_average_pooling_nwc(
   global_average_pooling_op->compute[0].type = xnn_parallelization_type_1d;
   global_average_pooling_op->compute[0].range[0] = batch_size;
 
+  *workspace_alignment = XNN_ALLOCATION_ALIGNMENT;
+
   if (width <= gavgpool->row_tile) {
+    *workspace_size = 0;
     global_average_pooling_op->compute[0].task_1d = (pthreadpool_task_1d_t) xnn_compute_global_average_pooling_nwc_unipass;
     global_average_pooling_op->context.global_average_pooling_nwc.unipass_ukernel = gavgpool->unipass;
   } else {
-    global_average_pooling_op->context.global_average_pooling_nwc.buffer_size =
-      (channels + (XNN_MAX_SIMD_SIZE >> log2_data_element_size)) << log2_accumulator_element_size;
+    *workspace_size = (channels + (XNN_MAX_SIMD_SIZE >> log2_data_element_size)) << log2_accumulator_element_size;
+    global_average_pooling_op->context.global_average_pooling_nwc.buffer_size = *workspace_size;
     global_average_pooling_op->compute[0].task_1d = (pthreadpool_task_1d_t) xnn_compute_global_average_pooling_nwc_multipass;
     global_average_pooling_op->context.global_average_pooling_nwc.multipass_ukernel = gavgpool->multipass;
   }
@@ -540,14 +545,17 @@ static void update_params_qu8(
 }
 
 enum xnn_status xnn_reshape_global_average_pooling_nwc_qu8(
-    xnn_operator_t global_average_pooling_op,
-    size_t batch_size,
-    size_t width,
-    pthreadpool_t threadpool)
+  xnn_operator_t global_average_pooling_op,
+  size_t batch_size,
+  size_t width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
+  pthreadpool_t threadpool)
 {
   return reshape_global_average_pooling_nwc(
     global_average_pooling_op,
     batch_size, width,
+    workspace_size, workspace_alignment,
     /*log2_data_element_size=*/XNN_LOG2_SIZEOF_UINT8_T,
     /*log2_accumulator_element_size=*/XNN_LOG2_SIZEOF_INT32_T,
     global_average_pooling_op->gavgpool_config,
@@ -568,14 +576,17 @@ static void update_params_qs8(
 }
 
 enum xnn_status xnn_reshape_global_average_pooling_nwc_qs8(
-    xnn_operator_t global_average_pooling_op,
-    size_t batch_size,
-    size_t width,
-    pthreadpool_t threadpool)
+  xnn_operator_t global_average_pooling_op,
+  size_t batch_size,
+  size_t width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
+  pthreadpool_t threadpool)
 {
   return reshape_global_average_pooling_nwc(
     global_average_pooling_op,
     batch_size, width,
+    workspace_size, workspace_alignment,
     /*log2_data_element_size=*/XNN_LOG2_SIZEOF_INT8_T,
     /*log2_accumulator_element_size=*/XNN_LOG2_SIZEOF_INT32_T,
     global_average_pooling_op->gavgpool_config,
@@ -596,14 +607,17 @@ static void update_params_f16(
 }
 
 enum xnn_status xnn_reshape_global_average_pooling_nwc_f16(
-    xnn_operator_t global_average_pooling_op,
-    size_t batch_size,
-    size_t width,
-    pthreadpool_t threadpool)
+  xnn_operator_t global_average_pooling_op,
+  size_t batch_size,
+  size_t width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
+  pthreadpool_t threadpool)
 {
   return reshape_global_average_pooling_nwc(
     global_average_pooling_op,
     batch_size, width,
+    workspace_size, workspace_alignment,
     /*log2_data_element_size=*/XNN_LOG2_SIZEOF_HALF,
     /*log2_accumulator_element_size=*/XNN_LOG2_SIZEOF_HALF,
     global_average_pooling_op->gavgpool_config,
@@ -623,14 +637,17 @@ static void update_params_f32(
 }
 
 enum xnn_status xnn_reshape_global_average_pooling_nwc_f32(
-    xnn_operator_t global_average_pooling_op,
-    size_t batch_size,
-    size_t width,
-    pthreadpool_t threadpool)
+  xnn_operator_t global_average_pooling_op,
+  size_t batch_size,
+  size_t width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
+  pthreadpool_t threadpool)
 {
   return reshape_global_average_pooling_nwc(
     global_average_pooling_op,
     batch_size, width,
+    workspace_size, workspace_alignment,
     /*log2_data_element_size=*/XNN_LOG2_SIZEOF_FLOAT,
     /*log2_accumulator_element_size=*/XNN_LOG2_SIZEOF_FLOAT,
     global_average_pooling_op->gavgpool_config,
@@ -642,10 +659,11 @@ enum xnn_status xnn_reshape_global_average_pooling_nwc_f32(
 }
 
 static enum xnn_status setup_global_average_pooling_nwc(
-    xnn_operator_t global_average_pooling_op,
-    enum xnn_operator_type expected_operator_type,
-    const void* input,
-    void* output)
+  xnn_operator_t global_average_pooling_op,
+  enum xnn_operator_type expected_operator_type,
+  void* workspace,
+  const void* input,
+  void* output)
 {
   if (global_average_pooling_op->type != expected_operator_type) {
     xnn_log_error("failed to setup operator: operator type mismatch (expected %s, got %s)",
@@ -669,66 +687,87 @@ static enum xnn_status setup_global_average_pooling_nwc(
       break;
   }
 
-  global_average_pooling_op->context.global_average_pooling_nwc.input = input;
-  global_average_pooling_op->context.global_average_pooling_nwc.output = output;
+  struct global_average_pooling_nwc_context* context = &global_average_pooling_op->context.global_average_pooling_nwc;
+  if (context->buffer_size != 0 && workspace == NULL) {
+    xnn_log_error(
+      "failed to setup %s operator: workspace of size %zu required but workspace is NULL",
+      xnn_operator_type_to_string(global_average_pooling_op->type), context->buffer_size);
+    return xnn_status_invalid_state;
+  }
+
+  context->input = input;
+  context->output = output;
+  context->multipass_buffer = workspace;
+
   global_average_pooling_op->state = xnn_run_state_ready;
 
   return xnn_status_success;
 }
 
 enum xnn_status xnn_setup_global_average_pooling_nwc_qu8(
-    xnn_operator_t global_average_pooling_op,
-    const uint8_t* input,
-    uint8_t* output)
+  xnn_operator_t global_average_pooling_op,
+  void* workspace,
+  const uint8_t* input,
+  uint8_t* output)
 {
   return setup_global_average_pooling_nwc(
     global_average_pooling_op,
     xnn_operator_type_global_average_pooling_nwc_qu8,
+    workspace,
     input, output);
 }
 
 enum xnn_status xnn_setup_global_average_pooling_nwc_qs8(
-    xnn_operator_t global_average_pooling_op,
-    const int8_t* input,
-    int8_t* output)
+  xnn_operator_t global_average_pooling_op,
+  void* workspace,
+  const int8_t* input,
+  int8_t* output)
 {
   return setup_global_average_pooling_nwc(
     global_average_pooling_op,
     xnn_operator_type_global_average_pooling_nwc_qs8,
+    workspace,
     input, output);
 }
 
 enum xnn_status xnn_setup_global_average_pooling_nwc_f16(
-    xnn_operator_t global_average_pooling_op,
-    const void* input,
-    void* output)
+  xnn_operator_t global_average_pooling_op,
+  void* workspace,
+  const void* input,
+  void* output)
 {
   return setup_global_average_pooling_nwc(
     global_average_pooling_op,
     xnn_operator_type_global_average_pooling_nwc_f16,
+    workspace,
     input, output);
 }
 
 enum xnn_status xnn_setup_global_average_pooling_nwc_f32(
-    xnn_operator_t global_average_pooling_op,
-    const float* input,
-    float* output)
+  xnn_operator_t global_average_pooling_op,
+  void* workspace,
+  const float* input,
+  float* output)
 {
   return setup_global_average_pooling_nwc(
     global_average_pooling_op,
     xnn_operator_type_global_average_pooling_nwc_f32,
+    workspace,
     input, output);
 }
 
 enum xnn_status xnn_reshape_global_sum_pooling_nwc_f16(
-    xnn_operator_t global_sum_pooling_op,
-    size_t batch_size,
-    size_t width,
-    pthreadpool_t threadpool)
+  xnn_operator_t global_sum_pooling_op,
+  size_t batch_size,
+  size_t width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
+  pthreadpool_t threadpool)
 {
   return reshape_global_average_pooling_nwc(
     global_sum_pooling_op,
     batch_size, width,
+    workspace_size, workspace_alignment,
     /*log2_data_element_size=*/XNN_LOG2_SIZEOF_HALF,
     /*log2_accumulator_element_size=*/XNN_LOG2_SIZEOF_HALF,
     global_sum_pooling_op->gavgpool_config,
@@ -740,14 +779,17 @@ enum xnn_status xnn_reshape_global_sum_pooling_nwc_f16(
 }
 
 enum xnn_status xnn_reshape_global_sum_pooling_nwc_f32(
-    xnn_operator_t global_sum_pooling_op,
-    size_t batch_size,
-    size_t width,
-    pthreadpool_t threadpool)
+  xnn_operator_t global_sum_pooling_op,
+  size_t batch_size,
+  size_t width,
+  size_t* workspace_size,
+  size_t* workspace_alignment,
+  pthreadpool_t threadpool)
 {
   return reshape_global_average_pooling_nwc(
     global_sum_pooling_op,
     batch_size, width,
+    workspace_size, workspace_alignment,
     /*log2_data_element_size=*/XNN_LOG2_SIZEOF_FLOAT,
     /*log2_accumulator_element_size=*/XNN_LOG2_SIZEOF_FLOAT,
     global_sum_pooling_op->gavgpool_config,
@@ -759,23 +801,27 @@ enum xnn_status xnn_reshape_global_sum_pooling_nwc_f32(
 }
 
 enum xnn_status xnn_setup_global_sum_pooling_nwc_f16(
-    xnn_operator_t global_sum_pooling_op,
-    const void* input,
-    void* output)
+  xnn_operator_t global_sum_pooling_op,
+  void* workspace,
+  const void* input,
+  void* output)
 {
   return setup_global_average_pooling_nwc(
     global_sum_pooling_op,
     xnn_operator_type_global_sum_pooling_nwc_f16,
+    workspace,
     input, output);
 }
 
 enum xnn_status xnn_setup_global_sum_pooling_nwc_f32(
-    xnn_operator_t global_sum_pooling_op,
-    const float* input,
-    float* output)
+  xnn_operator_t global_sum_pooling_op,
+  void* workspace,
+  const float* input,
+  float* output)
 {
   return setup_global_average_pooling_nwc(
     global_sum_pooling_op,
     xnn_operator_type_global_sum_pooling_nwc_f32,
+    workspace,
     input, output);
 }

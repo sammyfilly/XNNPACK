@@ -11,7 +11,9 @@
 #include <iostream>
 #include <limits>
 #include <random>
+#include <vector>
 
+#include <xnnpack/aligned-allocator.h>
 #include <xnnpack/cache.h>
 #include <xnnpack/common.h>
 #include <xnnpack/models.h>
@@ -3351,9 +3353,12 @@ ExecutionPlan FP32SparseMobileNetV3Small(float sparsity, pthreadpool_t threadpoo
     return ExecutionPlan();
   }
 
+  size_t op97_workspace_size = 0;
+  size_t op97_workspace_alignment = 0;
   status = xnn_reshape_global_average_pooling_nwc_f32(
     op97,
     /*batch_size=*/1, 1 /* width */,
+    &op97_workspace_size, &op97_workspace_alignment,
     /*threadpool=*/threadpool);
   if (status != xnn_status_success) {
     std::cerr << "failed to reshape operation #97" << std::endl;
@@ -4146,8 +4151,10 @@ ExecutionPlan FP32SparseMobileNetV3Small(float sparsity, pthreadpool_t threadpoo
     return ExecutionPlan();
   }
 
+  std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> op97_workspace(op97_workspace_size);
   status = xnn_setup_global_average_pooling_nwc_f32(
     op97,
+    op97_workspace.data(),
     /*input=*/v97.data(), /*output=*/v98.data());
   if (status != xnn_status_success) {
     std::cerr << "failed to setup operation #97" << std::endl;

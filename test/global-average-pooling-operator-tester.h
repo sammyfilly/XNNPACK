@@ -21,6 +21,8 @@
 #include <fp16/fp16.h>
 
 #include <xnnpack.h>
+#include <xnnpack/aligned-allocator.h>
+#include <xnnpack/common.h>
 
 
 class GlobalAveragePoolingOperatorTester {
@@ -198,15 +200,22 @@ class GlobalAveragePoolingOperatorTester {
       // Smart pointer to automatically delete global_average_pooling_op.
       std::unique_ptr<xnn_operator, decltype(&xnn_delete_operator)> auto_global_average_pooling_op(global_average_pooling_op, xnn_delete_operator);
 
+      size_t workspace_size = 0;
+      size_t workspace_alignment = 0;
       ASSERT_EQ(xnn_status_success,
         xnn_reshape_global_average_pooling_nwc_qu8(
           global_average_pooling_op,
           batch_size(), width(),
+          &workspace_size, &workspace_alignment,
           nullptr /* thread pool */));
+
+      ASSERT_LE(workspace_alignment, XNN_ALLOCATION_ALIGNMENT);
+      std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> workspace(workspace_size);
 
       ASSERT_EQ(xnn_status_success,
         xnn_setup_global_average_pooling_nwc_qu8(
           global_average_pooling_op,
+          workspace.data(),
           input.data(), output.data()));
 
       ASSERT_EQ(xnn_status_success,
@@ -271,15 +280,22 @@ class GlobalAveragePoolingOperatorTester {
       // Smart pointer to automatically delete global_average_pooling_op.
       std::unique_ptr<xnn_operator, decltype(&xnn_delete_operator)> auto_global_average_pooling_op(global_average_pooling_op, xnn_delete_operator);
 
+      size_t workspace_size = 0;
+      size_t workspace_alignment = 0;
       ASSERT_EQ(xnn_status_success,
         xnn_reshape_global_average_pooling_nwc_qs8(
           global_average_pooling_op,
           batch_size(), width(),
+          &workspace_size, &workspace_alignment,
           nullptr /* thread pool */));
+
+      ASSERT_LE(workspace_alignment, XNN_ALLOCATION_ALIGNMENT);
+      std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> workspace(workspace_size);
 
       ASSERT_EQ(xnn_status_success,
         xnn_setup_global_average_pooling_nwc_qs8(
           global_average_pooling_op,
+          workspace.data(),
           input.data(), output.data()));
 
       ASSERT_EQ(xnn_status_success,
@@ -352,15 +368,22 @@ class GlobalAveragePoolingOperatorTester {
       // Smart pointer to automatically delete global_average_pooling_op.
       std::unique_ptr<xnn_operator, decltype(&xnn_delete_operator)> auto_global_average_pooling_op(global_average_pooling_op, xnn_delete_operator);
 
+      size_t workspace_size = 0;
+      size_t workspace_alignment = 0;
       ASSERT_EQ(xnn_status_success,
         xnn_reshape_global_average_pooling_nwc_f16(
           global_average_pooling_op,
           batch_size(), width(),
+          &workspace_size, &workspace_alignment,
           nullptr /* thread pool */));
+
+      ASSERT_LE(workspace_alignment, XNN_ALLOCATION_ALIGNMENT);
+      std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> workspace(workspace_size);
 
       ASSERT_EQ(xnn_status_success,
         xnn_setup_global_average_pooling_nwc_f16(
           global_average_pooling_op,
+          workspace.data(),
           input.data(), output.data()));
 
       ASSERT_EQ(xnn_status_success,
@@ -435,15 +458,22 @@ class GlobalAveragePoolingOperatorTester {
       // Smart pointer to automatically delete global_average_pooling_op.
       std::unique_ptr<xnn_operator, decltype(&xnn_delete_operator)> auto_global_average_pooling_op(global_average_pooling_op, xnn_delete_operator);
 
+      size_t workspace_size = 0;
+      size_t workspace_alignment = 0;
       ASSERT_EQ(xnn_status_success,
         xnn_reshape_global_average_pooling_nwc_f32(
           global_average_pooling_op,
           batch_size(), width(),
+          &workspace_size, &workspace_alignment,
           nullptr /* thread pool */));
+
+      ASSERT_LE(workspace_alignment, XNN_ALLOCATION_ALIGNMENT);
+      std::vector<char, AlignedAllocator<char, XNN_ALLOCATION_ALIGNMENT>> workspace(workspace_size);
 
       ASSERT_EQ(xnn_status_success,
         xnn_setup_global_average_pooling_nwc_f32(
           global_average_pooling_op,
+          workspace.data(),
           input.data(), output.data()));
 
       ASSERT_EQ(xnn_status_success,

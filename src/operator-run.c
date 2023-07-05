@@ -899,7 +899,9 @@ void xnn_compute_global_average_pooling_nwc_multipass(
   void* output =
     (void*) ((uintptr_t) context->output + batch_index * context->output_batch_stride);
 
-  void* multipass_buffer = XNN_SIMD_ALLOCA(context->buffer_size);
+  // TODO(b/280869397): Change this to an assert after all operators using this have been migrated.
+  void* multipass_buffer =
+    context->multipass_buffer == NULL ? XNN_SIMD_ALLOCA(context->buffer_size) : context->multipass_buffer;
 
   context->multipass_ukernel(
     context->input_elements,
