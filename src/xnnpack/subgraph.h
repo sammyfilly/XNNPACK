@@ -31,6 +31,9 @@
 
 #define XNN_MAX_OPERATOR_OBJECTS 4
 
+/// A dimension of unknown magnitude (dynamic shape).
+#define XNN_UNKNOWN_DIM 0
+
 /// Disable fusion of nodes in subgraph. Fusion is enabled by default, set this flag to turn it off.
 #define XNN_FLAG_NO_OPERATOR_FUSION 0x80000000
 
@@ -40,7 +43,16 @@ extern "C" {
 
 struct xnn_shape {
   size_t num_dims;
+  // Original user-provided dimensions or inferred dimensions.
   size_t dim[XNN_MAX_TENSOR_DIMS];
+  // true if this dimension is static. Shape propagation will set dim.
+  // We need an extra flag because after 1 pass of shape inference, we can end up with dim == minimum_dim ==
+  // maximum_dim, and we won't be able to differentiate between static and dynamic dimension based on those fields.
+  bool is_static[XNN_MAX_TENSOR_DIMS];
+  // Minimum value of a dynamic dimension seen so far. Equals to dim if dimension is static.
+  size_t minimum_dim[XNN_MAX_TENSOR_DIMS];
+  // Maximum value of a dynamic dimension seen so far. Equals to dim if dimension is static.
+  size_t maximum_dim[XNN_MAX_TENSOR_DIMS];
 };
 
 enum xnn_value_type {
@@ -190,6 +202,10 @@ typedef enum xnn_status (*xnn_setup_operator_fn)(
   const struct xnn_value* values,
   size_t num_values,
   pthreadpool_t threadpool);
+
+typedef enum xnn_status (*xnn_infer_shape_fn)(
+  const struct xnn_node* node,
+  struct xnn_value* values);
 
 enum xnn_compute_type {
   xnn_compute_type_invalid = 0,
@@ -342,6 +358,10 @@ struct xnn_node {
   xnn_reshape_operator_fn reshape;
   // Function to setup an operator using opdata.
   xnn_setup_operator_fn setup;
+  // Function for shape inference forward pass (infer output shape from input shape).
+  xnn_infer_shape_fn infer_shape_forward;
+  // Function for shape inference backward pass (infer input shape from output shape).
+  xnn_infer_shape_fn infer_shape_backward;
 };
 
 #ifdef __MACH__
@@ -444,6 +464,12 @@ size_t xnn_tensor_get_size(const struct xnn_value* value);
 
 size_t xnn_tensor_get_size_by_id(xnn_subgraph_t subgraph, uint32_t value_id);
 
+// Checks if a tensor shape is completely known.
+size_t xnn_tensor_shape_is_static(const struct xnn_value* value);
+
+// Sets a single dimension of to based on a dimension of from.
+void xnn_tensor_propagate_dimension(struct xnn_value* to, uint32_t to_dim, struct xnn_value* from, uint32_t from_dim);
+
 // Product of all shape dimensions
 size_t xnn_shape_multiply_all_dims(
   const struct xnn_shape shape[1]);
@@ -484,6 +510,10 @@ struct xnn_workspace {
 };
 
 void xnn_subgraph_analyze_consumers_and_producers(xnn_subgraph_t subgraph);
+
+// Infer shape information across subgraph.
+// No flags currently supported, in the future it can be used to configure how shape inference is done.
+enum xnn_status xnn_subgraph_infer_shape(xnn_subgraph_t subgraph, uint32_t flags);
 
 #ifdef __cplusplus
 }  // extern "C"

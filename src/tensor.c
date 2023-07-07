@@ -12,6 +12,7 @@
 #include <xnnpack.h>
 #include <xnnpack/allocator.h>
 #include <xnnpack/log.h>
+#include <xnnpack/math.h>
 #include <xnnpack/params.h>
 #include <xnnpack/subgraph.h>
 
@@ -25,6 +26,24 @@ static void set_allocation_type(struct xnn_value* value)
     value->allocation_type = xnn_allocation_type_persistent;
   } else {
     value->allocation_type = xnn_allocation_type_workspace;
+  }
+}
+
+static void set_shape(struct xnn_value* value, size_t num_dims, const size_t* dims)
+{
+  value->shape.num_dims = num_dims;
+  memcpy(value->shape.dim, dims, num_dims * sizeof(size_t));
+  for (size_t i = 0; i < num_dims; i++) {
+    size_t original_dim = value->shape.dim[i];
+    if (original_dim == 0) {
+      value->shape.is_static[i] = false;
+      value->shape.minimum_dim[i] = SIZE_MAX;
+      value->shape.maximum_dim[i] = 0;
+    } else {
+      value->shape.is_static[i] = true;
+      value->shape.minimum_dim[i] = original_dim;
+      value->shape.maximum_dim[i] = original_dim;
+    }
   }
 }
 
@@ -76,8 +95,7 @@ enum xnn_status xnn_define_tensor_value(
   }
   value->type = xnn_value_type_dense_tensor;
   value->datatype = datatype;
-  value->shape.num_dims = num_dims;
-  memcpy(value->shape.dim, dims, num_dims * sizeof(size_t));
+  set_shape(value, num_dims, dims);
   value->size = xnn_tensor_get_size_by_id(subgraph, value->id);
   value->flags = flags;
   value->data = (void*) (uintptr_t) data;
@@ -168,8 +186,7 @@ enum xnn_status xnn_define_quantized_tensor_value(
   value->datatype = datatype;
   value->quantization.zero_point = zero_point;
   value->quantization.scale = scale;
-  value->shape.num_dims = num_dims;
-  memcpy(value->shape.dim, dims, num_dims * sizeof(size_t));
+  set_shape(value, num_dims, dims);
   value->size = xnn_tensor_get_size_by_id(subgraph, value->id);
   value->flags = flags;
   value->data = (void*) (uintptr_t) data;
@@ -258,8 +275,7 @@ enum xnn_status xnn_define_channelwise_quantized_tensor_value(
   value->quantization.zero_point = 0;
   value->quantization.channelwise_scale = scale;
   value->quantization.channel_dimension = channel_dim;
-  value->shape.num_dims = num_dims;
-  memcpy(value->shape.dim, dims, num_dims * sizeof(size_t));
+  set_shape(value, num_dims, dims);
   value->size = xnn_tensor_get_size_by_id(subgraph, value->id);
   value->flags = flags;
   value->data = (void*) (uintptr_t) data;
@@ -335,4 +351,31 @@ size_t xnn_tensor_get_size_by_id(xnn_subgraph_t subgraph, uint32_t value_id)
 
   const struct xnn_value* value = subgraph->values + value_id;
   return xnn_tensor_get_size(value);
+}
+
+size_t xnn_tensor_shape_is_static(const struct xnn_value* value)
+{
+  for (size_t i = 0; i < value->shape.num_dims; i++) {
+    if (!value->shape.is_static[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void xnn_tensor_propagate_dimension(
+  struct xnn_value* to,
+  uint32_t to_dim,
+  struct xnn_value* from,
+  uint32_t from_dim)
+{
+  if (to->shape.is_static[to_dim]) {
+    return;
+  }
+
+  assert(to_dim < to->shape.num_dims);
+  assert(from_dim < from->shape.num_dims);
+  to->shape.dim[to_dim] = from->shape.dim[from_dim];
+  to->shape.minimum_dim[to_dim] = min(to->shape.minimum_dim[to_dim], to->shape.dim[to_dim]);
+  to->shape.maximum_dim[to_dim] = max(to->shape.maximum_dim[to_dim], to->shape.dim[to_dim]);
 }
