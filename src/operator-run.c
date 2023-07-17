@@ -1618,6 +1618,134 @@ void xnn_compute_rope(
   }
 #endif  // XNN_MAX_UARCH_TYPES > 1
 
+// TODO(zhin): uarch support since we use GEMM twice here.
+void xnn_compute_scaled_dot_attention(
+  const struct scaled_dot_attention_context* context,
+  size_t batch_index,
+  size_t sequence_length_start,
+  size_t sequence_length_block_size)
+{
+  const size_t query_batch_offset = batch_index * context->query_batch_stride;
+  {
+    uintptr_t query = (uintptr_t) context->query + query_batch_offset + sequence_length_start * context->channels_scaled;
+    uintptr_t query_scaled = (uintptr_t) context->q_scaled + query_batch_offset + sequence_length_start * context->channels_scaled;
+    // Q_scaled = Q * Scale (along channels).
+    for (size_t i = 0; i < sequence_length_block_size; i++) {
+      context->vmul_ukernel(
+        /*batch=*/context->channels_scaled,
+        /*input_x=*/(void*) query,
+        /*input_y=*/context->scale,
+        /*output=*/(void*) query_scaled,
+        /*params=*/&context->minmax_params);
+      query += context->channels_scaled;
+      query_scaled += context->channels_scaled;
+    }
+  }
+
+  void* buffer = (void*) context->logits_buffer;
+  const size_t logits_batch_offset = batch_index * context->logits_batch_stride;
+
+  void* logits = (void*) (((uintptr_t) buffer + logits_batch_offset +
+              sequence_length_start * context->sequence_length_scaled));
+
+  // S = Gemm(Q_scaled, K^t). S is [sequence_length_block_size, sequence_length].
+  context->gemm_ukernel.function[XNN_UARCH_DEFAULT](
+    /*mr=*/sequence_length_block_size,
+    /*nr=*/context->sequence_length,
+    /*k=*/context->channels_scaled,
+    /*a=*/(void*) ((uintptr_t) context->q_scaled +
+        query_batch_offset +
+        sequence_length_start * context->channels_scaled),
+    /*a_stride=*/context->channels_scaled,
+    /*w=*/(void*) ((uintptr_t) context->key + batch_index * context->key_batch_stride),
+    /*c=*/(void*) (uintptr_t) logits,
+    /*cm_stride=*/context->sequence_length_scaled,
+    /*cn_stride=*/context->cn_stride,
+    /*params=*/&context->minmax_params);
+
+  {
+
+    if (context->logits_cap.type == xnn_attention_logits_cap_type_tanh) {
+      assert(context->logits_cap.f32.cap != 0.0f);
+      // (Optional) S = TanH(S/Cap) * Cap. Overwrites buffer.
+      context->vmulc_ukernel(
+        /*batch=*/sequence_length_block_size * context->sequence_length_scaled,
+        /*input_x=*/logits,
+        /*input_y=*/&context->logits_cap.f32.cap_reciprocal,
+        /*output=*/logits,
+        /*params=*/&context->minmax_params);
+      context->vtanh_ukernel(
+        /*batch=*/sequence_length_block_size * context->sequence_length_scaled,
+        /*input=*/logits,
+        /*output=*/logits,
+        /*params=*/&context->tanh_params);
+      context->vmulc_ukernel(
+        /*batch=*/sequence_length_block_size * context->sequence_length_scaled,
+        /*input_x=*/logits,
+        /*input_y=*/&context->logits_cap.f32,
+        /*output=*/logits,
+        /*params=*/&context->minmax_params);
+    }
+
+    // S = S + Mask. Mask has dimensions [sequence_length, sequence_length].
+    // Mask. Overwrites buffer.
+    context->vadd_ukernel(
+      /*batch=*/sequence_length_block_size * context->sequence_length_scaled,
+      /*input_x=*/logits,
+      /*input_y=*/(void*) ((uintptr_t) context->mask +
+        sequence_length_start * context->sequence_length_scaled),
+      /*output=*/logits,
+      /*params=*/&context->minmax_params);
+  }
+
+  // Skip initialization as they will be written to immediately.
+  float rowmax;
+  float rowsum;
+  float rowscale;
+
+  // P = Softmax(S). P has dimensions [sequence_length_block_size, sequence_length].
+  void* logits_row = logits;
+  for (size_t i = 0; i < sequence_length_block_size; i++) {
+    context->rmax_ukernel(
+      /*batch=*/context->sequence_length_scaled,
+      /*input=*/logits_row,
+      /*output=*/&rowmax);
+    context->raddstoreexpminusmax_ukernel(
+      /*batch=*/context->sequence_length_scaled,
+      /*input=*/logits_row,
+      /*max=*/&rowmax,
+      /*output=*/logits_row,
+      /*sum=*/&rowsum,
+      /*params=*/&context->expminus_params);
+    context->compute_reciprocal(
+      /*input=*/&rowsum,
+      /*output=*/&rowscale);
+    context->vmulc_ukernel(
+      /*batch=*/context->sequence_length_scaled,
+      /*input_x=*/logits_row,
+      /*input_y=*/&rowscale,
+      /*output=*/logits_row,
+      /*params=*/&context->minmax_params);
+
+    logits_row = (void*) ((uintptr_t) logits_row + context->sequence_length_scaled);
+  }
+
+  // O = Gemm(P, V). O has dimension [sequence_length_block_size, channels].
+  context->gemm_ukernel.function[XNN_UARCH_DEFAULT](
+      /*mr=*/sequence_length_block_size,
+      /*nc=*/context->channels,
+      /*kc=*/context->sequence_length_scaled,
+      /*a=*/(void*) ((uintptr_t) buffer +
+        logits_batch_offset + sequence_length_start * context->sequence_length_scaled),
+      /*a_stride=*/context->sequence_length_scaled,
+      /*w=*/(void*) ((uintptr_t) context->value +
+        (batch_index * context->value_batch_stride)),
+      /*c=*/(void*) ((uintptr_t) context->output +
+        query_batch_offset + (sequence_length_start * context->channels_scaled)),
+      /*cm_stride=*/context->channels_scaled,
+      /*cn_stride=*/context->cn_stride,
+      /*params=*/&context->minmax_params);
+}
 
 enum xnn_status xnn_run_operator(xnn_operator_t op, pthreadpool_t threadpool)
 {
