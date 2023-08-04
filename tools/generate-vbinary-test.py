@@ -29,47 +29,47 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Specification (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def split_ukernel_name(name):
   match = re.fullmatch(r"xnn_(qu8|qs8|f16|f32)_v(add|cmul|div|max|min|mul|sqrdiff|sub|addc|divc|rdivc|maxc|minc|mulc|sqrdiffc|subc|rsubc)(_(minmax|relu)(_(fp32|rndnu))?)?_ukernel__(.+)_x(\d+)", name)
   if match is None:
-    raise ValueError("Unexpected microkernel name: " + name)
+    raise ValueError(f"Unexpected microkernel name: {name}")
   op_type = {
-    "add": "Add",
-    "cmul": "CMul",
-    "div": "Div",
-    "max": "Max",
-    "min": "Min",
-    "mul": "Mul",
-    "sqrdiff": "SqrDiff",
-    "sub": "Sub",
-    "addc": "AddC",
-    "divc": "DivC",
-    "rdivc": "RDivC",
-    "maxc": "MaxC",
-    "minc": "MinC",
-    "mulc": "MulC",
-    "sqrdiffc": "SqrDiffC",
-    "subc": "SubC",
-    "rsubc": "RSubC",
-  }[match.group(2)]
-  batch_tile = int(match.group(8))
+      "add": "Add",
+      "cmul": "CMul",
+      "div": "Div",
+      "max": "Max",
+      "min": "Min",
+      "mul": "Mul",
+      "sqrdiff": "SqrDiff",
+      "sub": "Sub",
+      "addc": "AddC",
+      "divc": "DivC",
+      "rdivc": "RDivC",
+      "maxc": "MaxC",
+      "minc": "MinC",
+      "mulc": "MulC",
+      "sqrdiffc": "SqrDiffC",
+      "subc": "SubC",
+      "rsubc": "RSubC",
+  }[match[2]]
+  batch_tile = int(match[8])
 
-  activation_type = match.group(4)
+  activation_type = match[4]
   if activation_type is None:
     activation_type = "LINEAR"
   else:
     activation_type = activation_type.upper()
 
-  requantization_type = match.group(6)
+  requantization_type = match[6]
   if not requantization_type:
     requantization_type = None
   else:
     requantization_type = requantization_type.upper()
 
-  arch, isa, assembly = xnncommon.parse_target_name(target_name=match.group(7))
+  arch, isa, assembly = xnncommon.parse_target_name(target_name=match[7])
   return op_type, activation_type, requantization_type, batch_tile, arch, isa
 
 
@@ -286,12 +286,12 @@ def generate_test_cases(ukernel, op_type, init_fn, activation_type,
   _, datatype, _ = ukernel.split("_", 2)
   test_args = [ukernel]
   if tester in ["VBinaryMicrokernelTester", "VBinaryCMicrokernelTester"]:
-    test_args.append("%s::OpType::%s" % (tester, op_type))
+    test_args.append(f"{tester}::OpType::{op_type}")
   if init_fn:
     test_args.append(init_fn)
     if requantization_type:
-      test_args.append("xnn_%s_requantize_%s" % \
-        (datatype.lower(), requantization_type.lower()))
+      test_args.append(
+          f"xnn_{datatype.lower()}_requantize_{requantization_type.lower()}")
   return xngen.preprocess(BINOP_TEST_TEMPLATE, {
       "TEST_NAME": test_name.upper().replace("UKERNEL_", ""),
       "TEST_ARGS": test_args,

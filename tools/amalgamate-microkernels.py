@@ -47,8 +47,8 @@ def main(args):
   fileset = [filename.strip()[1:-1] for filename in
              build_text[start_pos:end_pos].split(",")]
 
-  amalgam_lines = list()
   amalgam_includes = set()
+  amalgam_lines = []
   for filename in sorted(fileset):
     if not filename:
       continue
@@ -106,10 +106,9 @@ def main(args):
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-"""
-
-  amalgam_text += "\n".join(sorted(inc for inc in amalgam_includes if
-                                   not inc.startswith("#include <xnnpack/")))
+""" + "\n".join(
+      sorted(inc for inc in amalgam_includes
+             if not inc.startswith("#include <xnnpack/")))
   if options.include:
     if options.include == "xopintrin.h":
       amalgam_text += "\n\n"

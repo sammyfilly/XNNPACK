@@ -22,7 +22,7 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Spec (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def split_ukernel_name(name):

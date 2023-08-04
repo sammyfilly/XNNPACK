@@ -32,7 +32,7 @@ parser.add_argument("--clamp_max", action="store_true")
 parser.add_argument("--max_mr", type=int, required=True)
 parser.add_argument("-o", "--output",
           help='Output file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def preprocess(input_text):

@@ -24,7 +24,7 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Spec (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 def split_ukernel_name(name):
   common_name, target_name = name.split("__", 1)
@@ -396,8 +396,7 @@ def generate_test_cases(ukernel, first_pass_tile, middle_pass_tile, last_pass_ti
     test_args.append(init_fn)
     if requantization:
       requantization_datatype = {"qc8": "qs8"}.get(datatype, datatype)
-      test_args.append("xnn_%s_requantize_%s" %
-        (requantization_datatype, requantization))
+      test_args.append(f"xnn_{requantization_datatype}_requantize_{requantization}")
   return xngen.preprocess(DWCONV_TEST_CODE, {
       "TEST_NAME": test_name.upper().replace("UKERNEL_", ""),
       "TEST_ARGS": test_args,

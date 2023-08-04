@@ -23,18 +23,15 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Specification (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def split_ukernel_name(name):
   match = re.fullmatch(r"xnn_u32_filterbank_accumulate_ukernel__(.+)(_x(\d+))?", name)
   assert match is not None
   row_tile = 1
-  batch_tile = 1
-  if match.group(3):
-    batch_tile = int(match.group(3))
-
-  arch, isa, assembly = xnncommon.parse_target_name(target_name=match.group(1))
+  batch_tile = int(match[3]) if match[3] else 1
+  arch, isa, assembly = xnncommon.parse_target_name(target_name=match[1])
   return row_tile, batch_tile, arch, isa, assembly
 
 

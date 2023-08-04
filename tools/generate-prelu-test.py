@@ -23,16 +23,16 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Specification (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def split_ukernel_name(name):
   match = re.fullmatch(r"xnn_(f16|f32)_prelu_ukernel__(.+)_(\d+)x(\d+)", name)
   assert match is not None
-  row_tile = int(match.group(3))
-  channel_tile = int(match.group(4))
+  row_tile = int(match[3])
+  channel_tile = int(match[4])
 
-  arch, isa, assembly = xnncommon.parse_target_name(target_name=match.group(2))
+  arch, isa, assembly = xnncommon.parse_target_name(target_name=match[2])
   return row_tile, channel_tile, arch, isa
 
 

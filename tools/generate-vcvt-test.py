@@ -23,23 +23,19 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Specification (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def split_ukernel_name(name):
   match = re.fullmatch(r"xnn_(f16|f32|qs16|qs8|qu8)(_(f16|f32|qs8|qu8))?_vcvt_ukernel__(.+)_x(\d+)", name)
   if match is None:
-    raise ValueError("Unexpected microkernel name: " + name)
+    raise ValueError(f"Unexpected microkernel name: {name}")
 
-  input_datatype = match.group(1)
-  if match.group(2):
-    output_datatype = match.group(3)
-  else:
-    output_datatype = input_datatype
+  input_datatype = match[1]
+  output_datatype = match[3] if match[2] else input_datatype
+  batch_tile = int(match[5])
 
-  batch_tile = int(match.group(5))
-
-  arch, isa, assembly = xnncommon.parse_target_name(target_name=match.group(4))
+  arch, isa, assembly = xnncommon.parse_target_name(target_name=match[4])
   return input_datatype, output_datatype, batch_tile, arch, isa
 
 

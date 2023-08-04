@@ -26,22 +26,22 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Specification (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def split_ukernel_name(name):
   match = re.fullmatch(r"xnn_(f16|f16_f32acc|f32)_r(minmax|max|min|sum)_ukernel__(.+)_x(\d+)(_acc\d+)?", name)
   if match is None:
-    raise ValueError("Unexpected microkernel name: " + name)
+    raise ValueError(f"Unexpected microkernel name: {name}")
   op_type = {
-    "minmax": "MinMax",
-    "max": "Max",
-    "min": "Min",
-    "sum": "Sum",
-  }[match.group(2)]
-  batch_tile = int(match.group(4))
+      "minmax": "MinMax",
+      "max": "Max",
+      "min": "Min",
+      "sum": "Sum",
+  }[match[2]]
+  batch_tile = int(match[4])
 
-  arch, isa, assembly = xnncommon.parse_target_name(target_name=match.group(3))
+  arch, isa, assembly = xnncommon.parse_target_name(target_name=match[3])
   return op_type, batch_tile, arch, isa
 
 
@@ -119,7 +119,7 @@ def generate_test_cases(ukernel, op_type, init_fn, tester, batch_tile, isa):
   _, datatype, _ = ukernel.split("_", 2)
   test_args = [ukernel]
   if tester == "ReduceMicrokernelTester":
-    test_args.append("ReduceMicrokernelTester::OpType::%s" % op_type)
+    test_args.append(f"ReduceMicrokernelTester::OpType::{op_type}")
   if init_fn:
     test_args.append(init_fn)
   return xngen.preprocess(REDUCE_TEST_TEMPLATE, {

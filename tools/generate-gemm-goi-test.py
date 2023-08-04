@@ -28,7 +28,7 @@ parser.add_argument(
     metavar="FILE",
     required=True,
     help="Output (C++ source) file(s)")
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def split_ukernel_name(name):
@@ -954,8 +954,7 @@ def generate_test_cases(ukernel, mr, nr, kr, sr, xw, k_block, init_fn,
     test_args.append(init_fn)
     if requantization:
       requantization_datatype = {"qc8": "qs8"}.get(datatype, datatype)
-      test_args.append("xnn_%s_requantize_%s" % \
-        (requantization_datatype, requantization))
+      test_args.append(f"xnn_{requantization_datatype}_requantize_{requantization}")
 
   if jit:
     if "minmax" in init_fn:

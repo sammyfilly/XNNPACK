@@ -30,8 +30,8 @@ def check_assembly_file_exists(filename):
 # JIT microkernel can be converted from a assembly file or a templated assembly file, gets the right "root" file.
 def get_assembly_file_or_template(converted_from):
   file = converted_from
-  with open(converted_from) as f:
-    for line in f.readlines():
+  with open(file) as f:
+    for line in f:
       if 'Template: ' in line:
         file = line.split()[2]
         break
@@ -47,8 +47,7 @@ def find_assembly_file(jit_file):
       if 'Converted from' in line:
         converted_from = line.split()[3]
         check_assembly_file_exists(converted_from)
-        assembly_file = get_assembly_file_or_template(converted_from)
-        return assembly_file
+        return get_assembly_file_or_template(converted_from)
     return f'{jit_file} does not have converted from'
 
 
@@ -58,7 +57,7 @@ def write_lint_markers(assembly_file, jit_file):
     lines = f.readlines()
     if any('LINT.IfChange' in l for l in lines):
       # Has lint marker, check that the JIT file is found.
-      if not any(jit_file.name in l for l in lines):
+      if all(jit_file.name not in l for l in lines):
         print(f'{jit_file.name} not found in {assembly_file}')
         assert(False)
       return

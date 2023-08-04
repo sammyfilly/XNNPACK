@@ -23,22 +23,16 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Specification (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 def split_ukernel_name(name):
   match = re.fullmatch(r"xnn_(x8|x16|x32)_packw_gemm_goi_ukernel_x(\d+)(c(\d+))?(s(\d+))?__(.+)_x(\d+)(_(.+))?", name)
   assert match is not None
-  nr = int(match.group(2))
-  if match.group(3):
-    kr = int(match.group(4))
-  else:
-    kr = 1
-  if match.group(5):
-    sr = int(match.group(6))
-  else:
-    sr = 1
-  kblock = int(match.group(8))
-  arch, isa, assembly = xnncommon.parse_target_name(target_name=match.group(7))
+  nr = int(match[2])
+  kr = int(match[4]) if match[3] else 1
+  sr = int(match[6]) if match[5] else 1
+  kblock = int(match[8])
+  arch, isa, assembly = xnncommon.parse_target_name(target_name=match[7])
   return nr, kr, sr, kblock, arch, isa
 
 
