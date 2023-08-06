@@ -40,7 +40,7 @@ parser.add_argument(
     metavar='NAME',
     required=True,
     help='Name of the enum variable')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def generate_source(enum_name, spec_path, output_path, header_path):
@@ -78,15 +78,15 @@ def generate_source(enum_name, spec_path, output_path, header_path):
     pos = 0
     for i, spec_entry in enumerate(spec_yaml):
       enum_item_name = spec_entry['name']
-      assert enum_item_name.startswith(enum_name + "_")
+      assert enum_item_name.startswith(f"{enum_name}_")
       enum_item_string = spec_entry['string']
 
       if i + 1 != len(spec_yaml):
-        string_declaration += '  "' + enum_item_string + '\\0"\n'
-        offset_declaration += ' ' + str(pos) + ','
+        string_declaration += f'  "{enum_item_string}' + '\\0"\n'
+        offset_declaration += f' {str(pos)},'
       else:
-        string_declaration += '  "' + enum_item_string + '";\n'
-        offset_declaration += ' ' + str(pos) + '\n};'
+        string_declaration += f'  "{enum_item_string}' + '";\n'
+        offset_declaration += f' {str(pos)}' + '\n};'
 
       # Wrap offset array on 120 columns
       last_offset_line = offset_declaration[offset_declaration.rfind('\n')+1:]
@@ -145,12 +145,12 @@ extern "C" {{
 enum {enum_name} {{\n"""
 
     enum_item_name = spec_yaml[0]['name']
-    assert enum_item_name.startswith(enum_name + "_")
-    output += '  ' + enum_item_name + ' = 0,\n'
+    assert enum_item_name.startswith(f"{enum_name}_")
+    output += f'  {enum_item_name}' + ' = 0,\n'
     for spec_entry in spec_yaml[1:]:
       enum_item_name = spec_entry['name']
-      assert enum_item_name.startswith(enum_name + "_")
-      output += '  ' + enum_item_name + ',\n'
+      assert enum_item_name.startswith(f"{enum_name}_")
+      output += f'  {enum_item_name}' + ',\n'
 
     arg_name = enum_name[len("xnn_"):]
     output += f"""}};

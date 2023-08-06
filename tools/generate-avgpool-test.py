@@ -23,24 +23,24 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Specification (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def split_ukernel_name(name):
   match = re.fullmatch(r"xnn_(qs8|qu8|f16|f32)_[p]?avgpool(_(minmax))?(_(fp32|rndnu))?_ukernel_((\d+)p)?(\d+)x__(.+)_c(\d+)(_acc(\d+))?", name)
   if match is None:
-    raise ValueError("Unexpected microkernel name: " + name)
+    raise ValueError(f"Unexpected microkernel name: {name}")
 
-  requantization_type = match.group(5)
-  if match.group(6):
-    primary_tile = int(match.group(7))
-    incremental_tile = int(match.group(8))
+  requantization_type = match[5]
+  if match[6]:
+    primary_tile = int(match[7])
+    incremental_tile = int(match[8])
   else:
-    primary_tile = int(match.group(8))
+    primary_tile = int(match[8])
     incremental_tile = 0
-  channel_tile = int(match.group(10))
+  channel_tile = int(match[10])
 
-  arch, isa, assembly = xnncommon.parse_target_name(target_name=match.group(9))
+  arch, isa, assembly = xnncommon.parse_target_name(target_name=match[9])
   return requantization_type, primary_tile, incremental_tile, channel_tile, arch, isa
 
 
@@ -2417,8 +2417,8 @@ def generate_test_cases(ukernel, init_fn, requantization_type, primary_tile,
   _, datatype, ukernel_type, _ = ukernel.split("_", 3)
   test_args = [ukernel, init_fn]
   if requantization_type:
-    test_args.append("xnn_%s_requantize_%s" % \
-      (datatype.lower(), requantization_type.lower()))
+    test_args.append(
+        f"xnn_{datatype.lower()}_requantize_{requantization_type.lower()}")
   return xngen.preprocess(AVGPOOL_TEST_TEMPLATE, {
       "TEST_NAME": test_name.upper().replace("UKERNEL_", ""),
       "TEST_ARGS": test_args,

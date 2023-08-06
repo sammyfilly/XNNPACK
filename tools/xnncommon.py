@@ -6,11 +6,11 @@
 
 
 def _indent(text):
-  return "\n".join(map(lambda t: "  " + t if t else t, text.splitlines()))
+  return "\n".join(map(lambda t: f"  {t}" if t else t, text.splitlines()))
 
 
 def _remove_duplicate_newlines(text):
-  filtered_lines = list()
+  filtered_lines = []
   last_newline = False
   for line in text.splitlines():
     is_newline = len(line.strip()) == 0
@@ -110,7 +110,7 @@ _ISA_TO_CHECK_MAP = {
 
 
 def parse_target_name(target_name):
-  arch = list()
+  arch = []
   isa = None
   assembly = False
   for target_part in target_name.split("_"):
@@ -139,20 +139,17 @@ def arch_to_macro(arch, isa):
 
 def postprocess_test_case(test_case, arch, isa, assembly=False, jit=False):
   test_case = _remove_duplicate_newlines(test_case)
-  if arch:
-    guard = " || ".join(arch_to_macro(a, isa) for a in arch)
-    if isa in _ISA_TO_MACRO_MAP:
-      if len(arch) > 1:
-        guard = "%s && (%s)" % (_ISA_TO_MACRO_MAP[isa], guard)
-      else:
-        guard = "%s && %s" % (_ISA_TO_MACRO_MAP[isa], guard)
-    if (assembly or jit) and "||" in guard:
-      guard = '(' + guard + ')'
-    if assembly:
-      guard += " && XNN_ENABLE_ASSEMBLY"
-    if jit:
-      guard += " && XNN_PLATFORM_JIT"
-    return "#if %s\n" % guard + _indent(test_case) + "\n" + \
-      "#endif  // %s\n" % guard
-  else:
+  if not arch:
     return test_case
+  guard = " || ".join(arch_to_macro(a, isa) for a in arch)
+  if isa in _ISA_TO_MACRO_MAP:
+    guard = (f"{_ISA_TO_MACRO_MAP[isa]} && ({guard})"
+             if len(arch) > 1 else f"{_ISA_TO_MACRO_MAP[isa]} && {guard}")
+  if (assembly or jit) and "||" in guard:
+    guard = f'({guard})'
+  if assembly:
+    guard += " && XNN_ENABLE_ASSEMBLY"
+  if jit:
+    guard += " && XNN_PLATFORM_JIT"
+  return "#if %s\n" % guard + _indent(test_case) + "\n" + \
+    "#endif  // %s\n" % guard

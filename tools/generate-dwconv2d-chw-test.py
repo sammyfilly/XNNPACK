@@ -23,7 +23,7 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Spec (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 TEST_TEMPLATE = """\
@@ -224,18 +224,18 @@ $if SUBSAMPLING > 1:
 def split_ukernel_name(name):
   match = re.fullmatch(r"xnn_(f16|f32)_dwconv2d_chw_ukernel_(\d+)x(\d+)(s2)?p(\d+)__(.+)_(\d+)x(\d+)(_acc\d+)?", name)
   assert match is not None
-  kernel_height, kernel_width = int(match.group(2)), int(match.group(3))
-  if match.group(4):
-    assert match.group(4).startswith("s")
-    stride = int(match.group(4)[1:])
+  kernel_height, kernel_width = int(match[2]), int(match[3])
+  if match[4]:
+    assert match[4].startswith("s")
+    stride = int(match[4][1:])
   else:
     stride = 1
-  padding = int(match.group(5))
+  padding = int(match[5])
 
-  height_tile = int(match.group(7))
-  width_tile = int(match.group(8))
+  height_tile = int(match[7])
+  width_tile = int(match[8])
 
-  arch, isa, assembly = xnncommon.parse_target_name(target_name=match.group(6))
+  arch, isa, assembly = xnncommon.parse_target_name(target_name=match[6])
   return kernel_height, kernel_width, stride, padding, arch, isa, \
          height_tile, width_tile
 

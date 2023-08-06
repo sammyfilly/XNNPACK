@@ -31,7 +31,7 @@ parser.add_argument("-D", dest="defines", metavar="KEY=VALUE", nargs="*",
           help="Predefined variables")
 parser.add_argument("-o", "--output",
           help='Output file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 LEADING_WHITESPACE_REGEX = re.compile(r"^\s*", flags=0)
@@ -39,7 +39,7 @@ LEADING_WHITESPACE_REGEX = re.compile(r"^\s*", flags=0)
 
 def extract_leading_whitespace(line):
   match = re.match(r"\s*", line)
-  return match.group(0) if match else ""
+  return match[0] if match else ""
 
 
 def escape(line):
@@ -49,7 +49,7 @@ def escape(line):
     end_pos = line.index("}", start_pos + 2)
     if start_pos != 0:
       output_parts.append("\"" + line[:start_pos].replace("\"", "\\\"") + "\"")
-    output_parts.append("str(" + line[start_pos+2:end_pos] + ")")
+    output_parts.append(f"str({line[start_pos + 2:end_pos]})")
     line = line[end_pos+1:]
   if line:
     output_parts.append("\"" + line.replace("\"", "\\\"") + "\"")
@@ -97,27 +97,26 @@ def preprocess(input_text, input_globals, input_path="codegen"):
       if stripped_input_line.endswith(":"):
         python_block_start = True
       while blank_lines != 0:
-        python_lines.append(python_indent + "print(file=OUT_STREAM)")
+        python_lines.append(f"{python_indent}print(file=OUT_STREAM)")
         blank_lines -= 1
       python_lines.append(python_indent + stripped_input_line.replace("$", ""))
     else:
       assert input_line.startswith(python_indent)
       while blank_lines != 0:
-        python_lines.append(python_indent + "print(file=OUT_STREAM)")
+        python_lines.append(f"{python_indent}print(file=OUT_STREAM)")
         blank_lines -= 1
-      python_lines.append(python_indent + "print(%s, file=OUT_STREAM)" % escape(input_line[len(python_indent):]))
+      python_lines.append(
+          f"{python_indent}print({escape(input_line[len(python_indent):])}, file=OUT_STREAM)"
+      )
     last_line = input_line
     last_indent = input_indent
 
   while blank_lines != 0:
-    python_lines.append(python_indent + "print(file=OUT_STREAM)")
+    python_lines.append(f"{python_indent}print(file=OUT_STREAM)")
     blank_lines -= 1
 
   exec_globals = dict(input_globals)
-  if sys.version_info > (3, 0):
-    output_stream = io.StringIO()
-  else:
-    output_stream = io.BytesIO()
+  output_stream = io.StringIO() if sys.version_info > (3, 0) else io.BytesIO()
   exec_globals["OUT_STREAM"] = output_stream
   python_bytecode = compile("\n".join(python_lines), input_path, 'exec')
   exec(python_bytecode, exec_globals)

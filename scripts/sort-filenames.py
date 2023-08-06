@@ -106,12 +106,11 @@ for input_filename in input_filenames:
         if re.search(filename_regex, line):
             if files_range == []:
                 files_range.append(i)
-        else:
-            if files_range != []:
-                files_range.append(i-1)
-                # manages min num lines
-                if files_range[1] - files_range[0] + 1 >= min_num_lines:filenames_ranges.append(files_range)
-                files_range = []
+        elif files_range != []:
+            files_range.append(i-1)
+            # manages min num lines
+            if files_range[1] - files_range[0] + 1 >= min_num_lines:filenames_ranges.append(files_range)
+            files_range = []
     if files_range != []:
         files_range.append(i-1)
         # manages min num lines

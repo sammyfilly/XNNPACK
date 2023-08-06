@@ -24,24 +24,24 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Specification (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def split_ukernel_name(name):
   match = re.fullmatch(r"xnn_(f16|f32)_argmaxpool_ukernel_((\d+)p)?(\d+)x__(.+)_c(\d+)", name)
   if match is None:
-    raise ValueError("Unexpected microkernel name: " + name)
+    raise ValueError(f"Unexpected microkernel name: {name}")
 
-  if match.group(2):
-    primary_tile = int(match.group(3))
-    incremental_tile = int(match.group(4))
+  if match[2]:
+    primary_tile = int(match[3])
+    incremental_tile = int(match[4])
   else:
-    primary_tile = int(match.group(4))
+    primary_tile = int(match[4])
     incremental_tile = 0
 
-  channel_tile = int(match.group(6))
+  channel_tile = int(match[6])
 
-  arch, isa, assembly = xnncommon.parse_target_name(target_name=match.group(5))
+  arch, isa, assembly = xnncommon.parse_target_name(target_name=match[5])
   return primary_tile, incremental_tile, channel_tile, arch, isa
 
 

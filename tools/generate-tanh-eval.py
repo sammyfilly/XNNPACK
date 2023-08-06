@@ -22,16 +22,16 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Specification (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def parse_eval_stub_name(name):
   match = re.fullmatch(r"xnn_math_(f16|f32)_tanh__(.+)?", name)
   if match is None:
-    raise ValueError("Unexpected evaluation stub name: " + name)
+    raise ValueError(f"Unexpected evaluation stub name: {name}")
 
-  arch, isa, _ = xnncommon.parse_target_name(target_name=match.group(2))
-  return match.group(1), arch, isa
+  arch, isa, _ = xnncommon.parse_target_name(target_name=match[2])
+  return match[1], arch, isa
 
 
 TEST_TEMPLATE = """\
@@ -72,13 +72,19 @@ def generate_test_cases(eval_stub, datatype, isa):
   Returns:
     Code for the test case.
   """
-  return xngen.preprocess(TEST_TEMPLATE, {
-      "TEST_NAME": eval_stub.replace("xnn_math_%s_" % datatype, "").upper(),
-      "TEST_FUNCTION": eval_stub,
-      "DATATYPE": datatype,
-      "SATURATION_LIMIT": {"f16": "0x1.208p+2", "f32": "0x1.205968p+3"}[datatype],
-      "ISA_CHECK": xnncommon.generate_isa_check_macro(isa),
-    })
+  return xngen.preprocess(
+      TEST_TEMPLATE,
+      {
+          "TEST_NAME": eval_stub.replace(f"xnn_math_{datatype}_", "").upper(),
+          "TEST_FUNCTION": eval_stub,
+          "DATATYPE": datatype,
+          "SATURATION_LIMIT": {
+              "f16": "0x1.208p+2",
+              "f32": "0x1.205968p+3"
+          }[datatype],
+          "ISA_CHECK": xnncommon.generate_isa_check_macro(isa),
+      },
+  )
 
 
 def main(args):

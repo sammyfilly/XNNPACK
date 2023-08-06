@@ -23,35 +23,35 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Specification (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def split_ukernel_name(name):
   match = re.fullmatch(r"(?:xnn_|xnn_generate_)(s8|u8|f16|f32|u32|u64)(_(s8|u8|f16|f32|u32|u64))*_v(abs|clamp|elu|hswish|lrelu|neg|relu|rndd|rndne|rndu|rndz|sigmoid|sqr|sqrt|sqrtshift|tanh)_(fact_)?ukernel__(.+)_x(\d+)(v)?", name)
   if match is None:
-    raise ValueError("Unexpected microkernel name: " + name)
+    raise ValueError(f"Unexpected microkernel name: {name}")
   op_type = {
-    "abs": "Abs",
-    "clamp": "Clamp",
-    "elu": "ELU",
-    "hswish": "HardSwish",
-    "lrelu": "LeakyReLU",
-    "neg": "Negate",
-    "relu": "ReLU",
-    "rndd": "RoundDown",
-    "rndne": "RoundToNearestEven",
-    "rndz": "RoundTowardsZero",
-    "rndu": "RoundUp",
-    "sigmoid": "Sigmoid",
-    "sqr": "Square",
-    "sqrt": "SquareRoot",
-    "sqrtshift": "SquareRootShift",
-    "tanh": "TanH",
-  }[match.group(4)]
-  batch_tile = int(match.group(7))
-  vector_tile = bool(match.group(8))
+      "abs": "Abs",
+      "clamp": "Clamp",
+      "elu": "ELU",
+      "hswish": "HardSwish",
+      "lrelu": "LeakyReLU",
+      "neg": "Negate",
+      "relu": "ReLU",
+      "rndd": "RoundDown",
+      "rndne": "RoundToNearestEven",
+      "rndz": "RoundTowardsZero",
+      "rndu": "RoundUp",
+      "sigmoid": "Sigmoid",
+      "sqr": "Square",
+      "sqrt": "SquareRoot",
+      "sqrtshift": "SquareRootShift",
+      "tanh": "TanH",
+  }[match[4]]
+  batch_tile = int(match[7])
+  vector_tile = bool(match[8])
 
-  arch, isa, assembly = xnncommon.parse_target_name(target_name=match.group(6))
+  arch, isa, assembly = xnncommon.parse_target_name(target_name=match[6])
   return op_type, batch_tile, vector_tile, arch, isa
 
 
@@ -227,17 +227,20 @@ def generate_test_cases(ukernel, op_type, init_fn, batch_tile, vector_tile, isa,
   _, datatype, _ = ukernel.split("_", 2)
   test_args = [ukernel]
   if op_type.startswith("Round"):
-    test_args.append("VUnaryMicrokernelTester::OpType::" + op_type)
+    test_args.append(f"VUnaryMicrokernelTester::OpType::{op_type}")
   if init_fn is not None:
     test_args.append(init_fn)
   if k_unroll is not None and use_local is not None:
     test_args.append(str(k_unroll))
     test_args.append(str(use_local))
-    test_name = test_name + "_x" + str(k_unroll) + "_" + ["no_local", "with_local"][use_local]
+    test_name = (f"{test_name}_x{str(k_unroll)}_" +
+                 ["no_local", "with_local"][use_local])
   batch_scale = ""
   if vector_tile:
     ctype = {"f16": "uint16_t", "f32": "float"}[datatype]
-    batch_scale = {"rvv": " * xnn_init_hardware_config()->vlenb / sizeof(%s)" % ctype}[isa]
+    batch_scale = {
+        "rvv": f" * xnn_init_hardware_config()->vlenb / sizeof({ctype})"
+    }[isa]
   return xngen.preprocess(TEST_TEMPLATE, {
       "TEST_NAME": test_name.upper().replace("UKERNEL_", ""),
       "TEST_ARGS": test_args,
@@ -286,7 +289,8 @@ def main(args):
       k_unroll = ukernel_spec.get("k_unroll")
       use_local = ukernel_spec.get("use_local")
       if k_unroll:
-        op_type, batch_tile, vector_tile, arch, isa = split_ukernel_name(name + "_x" + str(k_unroll))
+        op_type, batch_tile, vector_tile, arch, isa = split_ukernel_name(
+            f"{name}_x{str(k_unroll)}")
       else:
         op_type, batch_tile, vector_tile, arch, isa = split_ukernel_name(name)
 

@@ -28,7 +28,7 @@ parser.add_argument(
     metavar="FILE",
     required=True,
     help="Output (C++ source) file(s)")
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 def split_ukernel_name(name):
   common_name, target_name = name.split("__", 1)
@@ -1084,7 +1084,7 @@ def generate_test_cases(ukernel, mr, nr, kr, sr, xw, k_block, init_fn,
     _, datatype, ukernel_type, activation, _ = ukernel.split("_", 4)
     if datatype == "f32" and ukernel_type in ["qc8w", "qc4w"]:
       _, datatype, weighttype, ukernel_type, activation, _ = ukernel.split("_", 5)
-      datatype = datatype + "_" + weighttype
+      datatype = f"{datatype}_{weighttype}"
   if activation == "ukernel":
     activation = "linear"
   if activation in ["qs8w"]:
@@ -1094,8 +1094,7 @@ def generate_test_cases(ukernel, mr, nr, kr, sr, xw, k_block, init_fn,
     test_args.append(init_fn)
     if requantization:
       requantization_datatype = {"qc8": "qs8"}.get(datatype, datatype)
-      test_args.append("xnn_%s_requantize_%s" % \
-        (requantization_datatype, requantization))
+      test_args.append(f"xnn_{requantization_datatype}_requantize_{requantization}")
 
   if jit:
     if "minmax" in init_fn:

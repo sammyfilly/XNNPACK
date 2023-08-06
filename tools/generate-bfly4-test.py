@@ -23,22 +23,15 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Specification (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def split_ukernel_name(name):
   match = re.fullmatch(r"xnn_cs16_bfly4(_samples(\d+))?_ukernel__(.+)(_x(\d+))?", name)
   assert match is not None, name
-  if match.group(2):
-    samples = int(match.group(2))
-  else:
-    samples = 0
-  if match.group(5):
-    samples_tile = int(match.group(5))
-  else:
-    samples_tile = 1
-
-  arch, isa, assembly = xnncommon.parse_target_name(target_name=match.group(3))
+  samples = int(match[2]) if match[2] else 0
+  samples_tile = int(match[5]) if match[5] else 1
+  arch, isa, assembly = xnncommon.parse_target_name(target_name=match[3])
   return samples, samples_tile, arch, isa, assembly
 
 

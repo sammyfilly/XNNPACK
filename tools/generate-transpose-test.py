@@ -30,21 +30,18 @@ parser.add_argument(
     metavar="FILE",
     required=True,
     help="Output (C++ source) file")
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 
 def split_ukernel_name(name):
   match = re.fullmatch(r"xnn_x(.+)_transpose(v|c)_ukernel__(\d+)x(\d+)_(.+)", name)
   if match is None:
-    raise ValueError("Unexpected microkernel name: " + name)
-  if match.group(1) == 'x':
-    element_size = None
-  else:
-    element_size = int(int(match.group(1)) / 8)
-  tile_height = int(match.group(3))
-  tile_width = int(match.group(4))
+    raise ValueError(f"Unexpected microkernel name: {name}")
+  element_size = None if match[1] == 'x' else int(match[1]) // 8
+  tile_height = int(match[3])
+  tile_width = int(match[4])
 
-  arch, isa, assembly = xnncommon.parse_target_name(target_name=match.group(5))
+  arch, isa, assembly = xnncommon.parse_target_name(target_name=match[5])
   return tile_height, tile_width, element_size, arch, isa
 
 

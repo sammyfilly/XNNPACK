@@ -23,15 +23,15 @@ parser.add_argument("-s", "--spec", metavar="FILE", required=True,
                     help="Specification (YAML) file")
 parser.add_argument("-o", "--output", metavar="FILE", required=True,
                     help='Output (C++ source) file')
-parser.set_defaults(defines=list())
+parser.set_defaults(defines=[])
 
 def split_ukernel_name(name):
   match = re.fullmatch(r"xnn_(x8|x16|x32)_(packb|zerob)_gemm_ukernel_(\d+)c(\d+)s(\d+)r__(.+)", name)
   assert match is not None
-  channel_tile = int(match.group(3))
-  channel_subtile = int(match.group(4))
-  channel_round = int(match.group(5))
-  arch, isa, assembly = xnncommon.parse_target_name(target_name=match.group(4))
+  channel_tile = int(match[3])
+  channel_subtile = int(match[4])
+  channel_round = int(match[5])
+  arch, isa, assembly = xnncommon.parse_target_name(target_name=match[4])
   return channel_tile, channel_subtile, channel_round, arch, isa
 
 

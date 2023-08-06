@@ -120,10 +120,10 @@ def main(args):
     os.path.join(src_dir, 'xnnpack'),
   }
   c_microkernels_per_isa = {isa: [] for isa in ISA_LIST if isa not in ISA_MAP}
-  c_microkernels_per_isa['neon_aarch64'] = list()
-  c_microkernels_per_isa['neonfma_aarch64'] = list()
-  c_microkernels_per_isa['neonfp16arith_aarch64'] = list()
-  c_microkernels_per_isa['neonbf16_aarch64'] = list()
+  c_microkernels_per_isa['neon_aarch64'] = []
+  c_microkernels_per_isa['neonfma_aarch64'] = []
+  c_microkernels_per_isa['neonfp16arith_aarch64'] = []
+  c_microkernels_per_isa['neonbf16_aarch64'] = []
   asm_microkernels_per_arch = {arch: [] for arch in ARCH_LIST}
   jit_microkernels_per_arch = {arch: [] for arch in ARCH_LIST}
   for root, dirs, files in os.walk(src_dir, topdown=False):
@@ -148,21 +148,21 @@ def main(args):
             c_microkernels_per_isa[key].append(filepath)
             break
         else:
-          print('Unknown ISA for C microkernel %s' % filepath)
+          print(f'Unknown ISA for C microkernel {filepath}')
       elif ext == '.S':
         for component in basename.split('-'):
           if component in ARCH_LIST:
             asm_microkernels_per_arch[component].append(filepath)
             break
         else:
-          print('Unknown architecture for assembly microkernel %s' % filepath)
+          print(f'Unknown architecture for assembly microkernel {filepath}')
       elif ext == '.cc':
         for component in basename.split('-'):
           if component in ARCH_LIST:
             jit_microkernels_per_arch[component].append(filepath)
             break
         else:
-          print('Unknown architecture for JIT microkernel %s' % filepath)
+          print(f'Unknown architecture for JIT microkernel {filepath}')
 
   with io.StringIO() as microkernels_bzl:
     microkernels_bzl.write('''\
